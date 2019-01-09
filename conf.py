@@ -80,21 +80,11 @@ def get_project_samples_from_samplesheet(args):
             if line.startswith('[Data]'):
                 df_list.append(pd.read_csv(s))
                 break
-    for i,ss_df in enumerate(df_list):
-        df_list[i] = ss_df[ss_df.Sample_Project == args.project_id]
-    samples = {}
-    for df in df_list:
-        for sample_d in df.to_dict('records'):
-            sample = samples.get(sample_d['Sample_ID'],None):
-            if sample:
-                if sample == sample_d:
-                    continue
-                else:
-                    msg = 'The samplesheets contains conflicting records for Sample_ID {}'.format(sample_d['Sample_ID'])
-                    raise RuntimeError(msg)
-            samples[sample_d['Sample_ID']] = sample_d
-
-    return pd.DataFrame.from_dict(samples,orient='index')
+    df = pd.concat(df_list)
+    df = df[df.Sample_Project == args.project_id]
+    df = pd.DataFrame({'Sample_ID': df['Sample_ID']})
+    df = df.drop_duplicates(['Sample_ID'])
+    return df
 
 def inspect_dirs(args):
     project_dirs = []
