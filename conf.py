@@ -81,7 +81,7 @@ def get_project_samples_from_samplesheet(args):
             df_list.append(get_data_from_samplesheet(s))
     df = pd.concat(df_list)
     df = df[df.Sample_Project == args.project_id]
-    df = pd.DataFrame({'Sample_ID': df['Sample_ID']})
+    df = df[['Sample_ID']]
     df = df.drop_duplicates(['Sample_ID'])
     return df
 
@@ -123,6 +123,34 @@ def find_samples(df, project_dirs):
 
     return sample_dict
 
+def merge_samples_with_submission_form(args,sample_dict):
+    customer = pd.read_excel(args.ssub.name,sheetname=0,skiprows=14)
+    customer_column_map = {
+            'Unique Sample ID': 'Sample_ID',
+            'External ID (optional reference sample ID)': 'External_ID',
+            'Sample Group (conditions to be compared)': 'Sample_Group',
+            'Comments (optional info that does not fit in other columns)': 'Customer_Comment'
+        }
+    customer.rename(columns=customer_column_map,inplace=True)
+    customer = customer[['Sample_ID','External_ID','Sample_Group','Customer_Comment']]
+    lab = pd.read_excel(args.ssub.name,sheetname=2)
+    lab_column_map = {
+            'Concentration (ng/ul)': 'Concentration',
+            '260/280 ratio': '260/280',
+            '260/230 ratio': '260/230',
+            'Comment': 'Lab_Comment'
+        }
+    lab.rename(columns=lab_column_map,inplace=True)
+    lab = lab.drop(['Sample_Name','Project ID','KIT'],axis=1)
+    merge = pd.merge(customer,lab,on='Sample_ID',how='inner')
+    merge['Sample_ID'] = merge['Sample_ID'].astype(str)
+    sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
+    sample_df = sample_df.merge(merge,on='Sample_ID',how='left')
+    sample_df.reset_index()
+    sample_df.index = sample_df['Sample_ID']
+    s_dict = sample_df.to_dict(orient='index')
+    return s_dict
+
 def create_default_config(sample_dict,project_id=None):
     config = {}
     if project_id:
@@ -159,6 +187,8 @@ if __name__ == '__main__':
     project_dirs = inspect_dirs(args)
     s_df = get_project_samples_from_samplesheet(args)
     sample_dict = find_samples(s_df,project_dirs)
+    if args.ssub is not None:
+        sample_dict = merge_samples_with_submission_form(args,sample_dict)
     config =  create_default_config(sample_dict,args.project_id)
     yaml.dump(config,args.output,default_flow_style=False)
 
