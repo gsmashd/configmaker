@@ -70,19 +70,31 @@ def get_project_samples_from_samplesheet(args):
     Return a dataframe containing project samples
     """
     ss = inspect_samplesheet(args)
-    data = False
-    sheetlist = []
+    df_list = []
     with open(ss[0],'r') as s:
-        for line in s.readlines():
+        while True:
+            line = s.readline()
+            if not line:
+                msg = 'No [data]-section in samplesheet {}'.format(s.name)
+                raise RuntimeError(msg)
             if line.startswith('[Data]'):
-                data = True
-                continue
-            elif data:
-                sheetlist.append(line)
-    sheetstring = ''.join(sheetlist)
-    ss_df = pd.read_csv(pd.compat.StringIO(sheetstring))
-    ss_df = ss_df[ss_df.Sample_Project == args.project_id]
-    return ss_df
+                df_list.append(pd.read_csv(s))
+                break
+    for i,ss_df in enumerate(df_list):
+        df_list[i] = ss_df[ss_df.Sample_Project == args.project_id]
+    samples = {}
+    for df in df_list:
+        for sample_d in df.to_dict('records'):
+            sample = samples.get(sample_d['Sample_ID'],None):
+            if sample:
+                if sample == sample_d:
+                    continue
+                else:
+                    msg = 'The samplesheets contains conflicting records for Sample_ID {}'.format(sample_d['Sample_ID'])
+                    raise RuntimeError(msg)
+            samples[sample_d['Sample_ID']] = sample_d
+
+    return pd.DataFrame.from_dict(samples,orient='index')
 
 def inspect_dirs(args):
     project_dirs = []
@@ -98,7 +110,10 @@ def match_fastq(sample_name, project_dir):
     """
     r1_fastq_files = glob.glob(os.path.join(project_dir, sample_name + '*R1.fastq.gz'), recursive=True)
     r2_fastq_files = glob.glob(os.path.join(project_dir, sample_name + '*R2.fastq.gz'), recursive=True)
-    return r1_fastq_files, r2_fastq_files
+
+    r1 = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
+    r2 = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
+    return r1, r2
 
 def find_samples(df, project_dirs):
     sample_dict = {}
@@ -113,8 +128,8 @@ def find_samples(df, project_dirs):
         sample_dict[row.Sample_ID] = {
                 'R1': ','.join(s_r1),
                 'R2': ','.join(s_r2),
-                'pe': pe,
-                'sample_id': row.Sample_ID,
+                'paired_end': pe,
+                'Sample_ID': row.Sample_ID,
             }
 
     return sample_dict
@@ -156,5 +171,5 @@ if __name__ == '__main__':
     s_df = get_project_samples_from_samplesheet(args)
     sample_dict = find_samples(s_df,project_dirs)
     config =  create_default_config(sample_dict,args.project_id)
-    yaml.dump(config,args.output)
+    yaml.dump(config,args.output,default_flow_style=False)
 
