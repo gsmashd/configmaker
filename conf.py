@@ -49,7 +49,7 @@ def inspect_samplesheet(args):
     else: check that runfolder(s) contain a SampleSheet.csv and return it (them).
     """
     if args.samplesheet is not None:
-        return args.samplesheet
+        return [args.samplesheet.name]
     else:
         samplesheets = []
         for pth in args.runfolders:
@@ -76,13 +76,9 @@ def get_project_samples_from_samplesheet(args):
     """
     ss = inspect_samplesheet(args)
     df_list = []
-    if args.samplesheet is not None:
-        df_list.append(get_data_from_samplesheet(ss))
-    else:
-        for sheet in ss:
-            with open(sheet,'r') as s:
-                df_list.append(get_data_from_samplesheet(s))
-    
+    for sheet in ss:
+        with open(sheet,'r') as s:
+            df_list.append(get_data_from_samplesheet(s))
     df = pd.concat(df_list)
     df = df[df.Sample_Project == args.project_id]
     df = pd.DataFrame({'Sample_ID': df['Sample_ID']})
