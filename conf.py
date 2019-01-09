@@ -49,11 +49,7 @@ def inspect_samplesheet(args):
     else: check that runfolder(s) contain a SampleSheet.csv and return it (them).
     """
     if args.samplesheet is not None:
-        if os.path.isfile(args.samplesheet):
-            return args.samplesheet
-        else:
-            msg = "SampleSheet {} does not exist!".format(args.samplesheet)
-            raise argparse.ArgumentTypeError(msg)
+        return args.samplesheet
     else:
         samplesheets = []
         for pth in args.runfolders:
@@ -65,21 +61,28 @@ def inspect_samplesheet(args):
             raise RuntimeError(msg)
         return samplesheets
 
+def get_data_from_samplesheet(fh):
+    while True:
+        line = fh.readline()
+        if not line:
+            msg = 'No [data]-section in samplesheet {}'.format(s.name)
+            raise RuntimeError(msg)
+        if line.startswith('[Data]'):
+            return pd.read_csv(fh)
+
 def get_project_samples_from_samplesheet(args):
     """
     Return a dataframe containing project samples
     """
     ss = inspect_samplesheet(args)
     df_list = []
-    with open(ss[0],'r') as s:
-        while True:
-            line = s.readline()
-            if not line:
-                msg = 'No [data]-section in samplesheet {}'.format(s.name)
-                raise RuntimeError(msg)
-            if line.startswith('[Data]'):
-                df_list.append(pd.read_csv(s))
-                break
+    if args.samplesheet is not None:
+        df_list.append(get_data_from_samplesheet(ss))
+    else:
+        for sheet in ss:
+            with open(sheet,'r') as s:
+                df_list.append(get_data_from_samplesheet(s))
+    
     df = pd.concat(df_list)
     df = df[df.Sample_Project == args.project_id]
     df = pd.DataFrame({'Sample_ID': df['Sample_ID']})
