@@ -7,6 +7,10 @@ import glob
 import argparse
 import pandas as pd
 import yaml
+import logging
+
+logger = logging.getLogger('GCF-configmaker')
+logger.setLevel(logging.WARNING)
 
 
 class FullPaths(argparse.Action):
@@ -124,7 +128,7 @@ def find_samples(df, project_dirs):
     return sample_dict
 
 def merge_samples_with_submission_form(args,sample_dict):
-    customer = pd.read_excel(args.ssub.name,sheetname=0,skiprows=14)
+    customer = pd.read_excel(args.ssub.name,sheet_name=0,skiprows=14)
     customer_column_map = {
             'Unique Sample ID': 'Sample_ID',
             'External ID (optional reference sample ID)': 'External_ID',
@@ -133,7 +137,8 @@ def merge_samples_with_submission_form(args,sample_dict):
         }
     customer.rename(columns=customer_column_map,inplace=True)
     customer = customer[['Sample_ID','External_ID','Sample_Group','Customer_Comment']]
-    lab = pd.read_excel(args.ssub.name,sheetname=2)
+    check_existence_of_samples(sample_dict.keys(),customer)
+    lab = pd.read_excel(args.ssub.name,sheet_name=2)
     lab_column_map = {
             'Concentration (ng/ul)': 'Concentration',
             '260/280 ratio': '260/280',
@@ -142,14 +147,26 @@ def merge_samples_with_submission_form(args,sample_dict):
         }
     lab.rename(columns=lab_column_map,inplace=True)
     lab = lab.drop(['Sample_Name','Project ID','KIT'],axis=1)
+    #check_existence_of_samples(sample_dict.keys(),lab)
     merge = pd.merge(customer,lab,on='Sample_ID',how='inner')
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
-    sample_df = sample_df.merge(merge,on='Sample_ID',how='left')
+    sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
     sample_df.reset_index()
     sample_df.index = sample_df['Sample_ID']
     s_dict = sample_df.to_dict(orient='index')
     return s_dict
+
+def check_existence_of_samples(samples,df):
+    #df['Sample_ID'] = df['Sample_ID'].astype(str)
+    #df_from_samples = df[~df['Sample_ID'].isin(list(samples))]
+    diff = set(samples) - set(df['Sample_ID'].astype(str))
+    if diff:
+        logger.warning("WARNING Samples {} are contained in SampleSheet, but not in sample submission form!".format(', '.join(list(diff))))
+    diff = set(df['Sample_ID'].astype(str)) - set(samples)
+    if diff:
+        logger.warning("WARNING Samples {} are contained in sample submission form, but not in SampleSheet!".format(', '.join(list(diff))))
+    return None
 
 def create_default_config(sample_dict,project_id=None):
     config = {}
