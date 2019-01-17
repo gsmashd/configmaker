@@ -154,12 +154,11 @@ def merge_samples_with_submission_form(args,sample_dict):
     sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
     sample_df.reset_index()
     sample_df.index = sample_df['Sample_ID']
+    sample_df.fillna('',inplace=True)
     s_dict = sample_df.to_dict(orient='index')
     return s_dict
 
 def check_existence_of_samples(samples,df):
-    #df['Sample_ID'] = df['Sample_ID'].astype(str)
-    #df_from_samples = df[~df['Sample_ID'].isin(list(samples))]
     diff = set(samples) - set(df['Sample_ID'].astype(str))
     if diff:
         logger.warning("WARNING Samples {} are contained in SampleSheet, but not in sample submission form!".format(', '.join(list(diff))))
