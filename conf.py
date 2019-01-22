@@ -66,13 +66,20 @@ def inspect_samplesheet(args):
         return samplesheets
 
 def get_data_from_samplesheet(fh):
+    custom_opts = False
+    opts_d = {}
     while True:
         line = fh.readline()
         if not line:
             msg = 'No [data]-section in samplesheet {}'.format(s.name)
             raise RuntimeError(msg)
         if line.startswith('[Data]'):
-            return pd.read_csv(fh)
+            return pd.read_csv(fh), opts_d
+        elif line.startswith('[CustomOptions]'):
+            custom_opts = True
+            continue
+        elif custom_opts:
+            opts_d[line.split(',')[0].rstrip()] = line.split(',')[1].rstrip()
 
 def get_project_samples_from_samplesheet(args):
     """
@@ -82,12 +89,13 @@ def get_project_samples_from_samplesheet(args):
     df_list = []
     for sheet in ss:
         with open(sheet,'r') as s:
-            df_list.append(get_data_from_samplesheet(s))
+            data, opts = get_data_from_samplesheet(s)
+            df_list.append(data)
     df = pd.concat(df_list)
     df = df[df.Sample_Project == args.project_id]
     df = df[['Sample_ID']]
     df = df.drop_duplicates(['Sample_ID'])
-    return df
+    return df, opts
 
 def inspect_dirs(args):
     project_dirs = []
@@ -167,13 +175,14 @@ def check_existence_of_samples(samples,df):
         logger.warning("WARNING Samples {} are contained in sample submission form, but not in SampleSheet!".format(', '.join(list(diff))))
     return None
 
-def create_default_config(sample_dict,project_id=None):
+def create_default_config(sample_dict,opts,project_id=None):
     config = {}
     if project_id:
          config['project_id'] = project_id
     config['ext_dir'] = 'data/ext'
     config['interim_dir'] = 'data/tmp'
     config['processed_dir'] = 'data/processed'
+    config.update(opts)
     config['merge'] = {}
     config['merge']['skip'] = False
     config['merge']['step'] = 'quant'
@@ -201,10 +210,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     project_dirs = inspect_dirs(args)
-    s_df = get_project_samples_from_samplesheet(args)
+    s_df, opts = get_project_samples_from_samplesheet(args)
     sample_dict = find_samples(s_df,project_dirs)
     if args.ssub is not None:
         sample_dict = merge_samples_with_submission_form(args,sample_dict)
-    config =  create_default_config(sample_dict,args.project_id)
+    config =  create_default_config(sample_dict,opts,project_id=args.project_id)
     yaml.dump(config,args.output,default_flow_style=False)
 
