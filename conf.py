@@ -155,7 +155,6 @@ def merge_samples_with_submission_form(args,sample_dict):
         }
     lab.rename(columns=lab_column_map,inplace=True)
     lab = lab.drop(['Sample_Name','Project ID','KIT'],axis=1)
-    #check_existence_of_samples(sample_dict.keys(),lab)
     merge = pd.merge(customer,lab,on='Sample_ID',how='inner')
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
@@ -175,7 +174,7 @@ def check_existence_of_samples(samples,df):
         logger.warning("WARNING Samples {} are contained in sample submission form, but not in SampleSheet!".format(', '.join(list(diff))))
     return None
 
-def create_default_config(sample_dict,opts,project_id=None):
+def create_default_config(sample_dict,opts,args,project_id=None):
     config = {}
     if project_id:
          config['project_id'] = project_id
@@ -191,6 +190,10 @@ def create_default_config(sample_dict,opts,project_id=None):
     config['split']['skip'] = True
     config['split']['step'] = 'filter'
     config['split']['sscol'] = 'Sample_Project'
+    if args.libkit is not None:
+        config['Libprep'] = args.libkit
+    if args.organism is not None:
+        config['Organism'] = args.organism
     config['samples'] = sample_dict
     return config
 
@@ -203,17 +206,15 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--sample-sheet", dest="samplesheet", type=argparse.FileType('r'), help="IEM Samplesheet")
     parser.add_argument("-o", "--output", default="config.yaml", help="Output config file", type=argparse.FileType('w'))
     parser.add_argument("--sample-submission-form", dest="ssub", type=argparse.FileType('r'), help="GCF Sample Submission Form")
-    parser.add_argument("--organism", default="homo_sapiens", help="Organism (if applicable to all samples)")
-    parser.add_argument("--libkit", default="rna-trueseq", help="Library preparation kit. (if applicable for all samples)")
-    parser.add_argument("-v", "--verbosity", action="count", default=0,
-                              help="increase output verbosity")
+    parser.add_argument("--organism",  help="Organism (if applicable to all samples). Overrides value from samplesheet.")
+    parser.add_argument("--libkit",  help="Library preparation kit. (if applicable for all samples). Overrides value from samplesheet.")
+    
     args = parser.parse_args()
-
     project_dirs = inspect_dirs(args)
     s_df, opts = get_project_samples_from_samplesheet(args)
     sample_dict = find_samples(s_df,project_dirs)
     if args.ssub is not None:
         sample_dict = merge_samples_with_submission_form(args,sample_dict)
-    config =  create_default_config(sample_dict,opts,project_id=args.project_id)
+    config =  create_default_config(sample_dict,opts,args,project_id=args.project_id)
     yaml.dump(config,args.output,default_flow_style=False)
 
