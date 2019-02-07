@@ -1,31 +1,373 @@
+Libprep: N/A
+Organism: mus_musculus
+RemoveHumanReads: 'False'
+ReverseComplementIndexP5: 'False'
+ReverseComplementIndexP7: 'False'
+SensitiveData: 'False'
+SingleCell: 'False'
+TrimAdapter: 'False'
 ext_dir: data/ext
 interim_dir: data/tmp
-merge: {skip: false, sscol: Sample_ID, step: quant}
+merge:
+  skip: false
+  sscol: Sample_ID
+  step: quant
 processed_dir: data/processed
-project_id: GCF-2018-475
+project_id: GCF-2017-475
 samples:
-  '13': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/13_S11_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/13_S11_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/13_S11_L002_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/13_S11_L004_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '13'}
-  '14': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/14_S12_L002_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/14_S12_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/14_S12_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/14_S12_L003_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '14'}
-  '15': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/15_S13_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/15_S13_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/15_S13_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/15_S13_L002_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '15'}
-  '16': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/16_S14_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/16_S14_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/16_S14_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/16_S14_L002_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '16'}
-  '17': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/17_S15_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/17_S15_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/17_S15_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/17_S15_L002_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '17'}
-  '18': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/18_S16_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/18_S16_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/18_S16_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/18_S16_L002_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '18'}
-  '19': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/19_S17_L002_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/19_S17_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/19_S17_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/19_S17_L003_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '19'}
-  '20': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/20_S18_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/20_S18_L002_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/20_S18_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/20_S18_L001_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '20'}
-  '21': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/21_S19_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/21_S19_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/21_S19_L002_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/21_S19_L004_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '21'}
-  '22': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/22_S20_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/22_S20_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/22_S20_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/22_S20_L002_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '22'}
-  '23': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/23_S21_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/23_S21_L001_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/23_S21_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/23_S21_L002_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '23'}
-  '24': {R1: '/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/24_S22_L002_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/24_S22_L003_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/24_S22_L004_R1.fastq.gz,/home/geiramh/bfq/output/180420_NB501038_0108_AHG7N2BGX5/GCF-2018-475/24_S22_L001_R1.fastq.gz',
-    R2: '', pe: 0, sample_id: '24'}
-split: {skip: true, sscol: Sample_Project, step: filter}
+  '10':
+    260/230: 0.27
+    260/280: 2.24
+    Concentration: 72.2
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P10TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/10_S8_R1.fastq.gz
+    R2: ''
+    RIN: 9.3
+    Sample_Group: Cancer
+    Sample_ID: '10'
+    paired_end: 0
+  '11':
+    260/230: 1.58
+    260/280: 2.16
+    Concentration: 80.6
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P12LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/11_S9_R1.fastq.gz
+    R2: ''
+    RIN: 8.5
+    Sample_Group: Control
+    Sample_ID: '11'
+    paired_end: 0
+  '12':
+    260/230: 0.15
+    260/280: 2.4
+    Concentration: 25.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P12TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/12_S10_R1.fastq.gz
+    R2: ''
+    RIN: 8.9
+    Sample_Group: Cancer
+    Sample_ID: '12'
+    paired_end: 0
+  '13':
+    260/230: 0.27
+    260/280: 3.55
+    Concentration: 16.6
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P14LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/13_S11_R1.fastq.gz
+    R2: ''
+    RIN: 8.8
+    Sample_Group: Control
+    Sample_ID: '13'
+    paired_end: 0
+  '14':
+    260/230: 3.87
+    260/280: 2.57
+    Concentration: 27.8
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P14TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/14_S12_R1.fastq.gz
+    R2: ''
+    RIN: 9.1
+    Sample_Group: Cancer
+    Sample_ID: '14'
+    paired_end: 0
+  '15':
+    260/230: 0.05
+    260/280: 2.49
+    Concentration: 28.4
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P15LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/15_S13_R1.fastq.gz
+    R2: ''
+    RIN: 9.2
+    Sample_Group: Control
+    Sample_ID: '15'
+    paired_end: 0
+  '16':
+    260/230: 0.89
+    260/280: 1.78
+    Concentration: 19.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P15TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/16_S14_R1.fastq.gz
+    R2: ''
+    RIN: 9.3
+    Sample_Group: Cancer
+    Sample_ID: '16'
+    paired_end: 0
+  '17':
+    260/230: 0.91
+    260/280: 2.18
+    Concentration: 62.6
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P16LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/17_S15_R1.fastq.gz
+    R2: ''
+    RIN: 9.0
+    Sample_Group: Control
+    Sample_ID: '17'
+    paired_end: 0
+  '18':
+    260/230: 0.6
+    260/280: 2.28
+    Concentration: 27.4
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P16TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/18_S16_R1.fastq.gz
+    R2: ''
+    RIN: 9.5
+    Sample_Group: Cancer
+    Sample_ID: '18'
+    paired_end: 0
+  '19':
+    260/230: 2.04
+    260/280: 2.05
+    Concentration: 387.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P17LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/19_S17_R1.fastq.gz
+    R2: ''
+    RIN: 9.6
+    Sample_Group: Control
+    Sample_ID: '19'
+    paired_end: 0
+  1a:
+    260/230: 0.97
+    260/280: 1.98
+    Concentration: 33.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P7LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/1a_S1_R1.fastq.gz
+    R2: ''
+    RIN: 10.0
+    Sample_Group: Control
+    Sample_ID: 1a
+    paired_end: 0
+  '20':
+    260/230: 1.85
+    260/280: 2.03
+    Concentration: 49.1
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P17TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/20_S18_R1.fastq.gz
+    R2: ''
+    RIN: 9.8
+    Sample_Group: Cancer
+    Sample_ID: '20'
+    paired_end: 0
+  '21':
+    260/230: 2.1
+    260/280: 2.08
+    Concentration: 244.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P18LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/21_S19_R1.fastq.gz
+    R2: ''
+    RIN: 9.8
+    Sample_Group: Control
+    Sample_ID: '21'
+    paired_end: 0
+  '22':
+    260/230: 0.59
+    260/280: 2.22
+    Concentration: 48.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P18TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/22_S20_R1.fastq.gz
+    R2: ''
+    RIN: 9.5
+    Sample_Group: Cancer
+    Sample_ID: '22'
+    paired_end: 0
+  '23':
+    260/230: 1.92
+    260/280: 2.1
+    Concentration: 248.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P19LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/23_S21_R1.fastq.gz
+    R2: ''
+    RIN: 10.0
+    Sample_Group: Control
+    Sample_ID: '23'
+    paired_end: 0
+  '24':
+    260/230: 1.84
+    260/280: 2.06
+    Concentration: 136.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P19TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/24_S22_R1.fastq.gz
+    R2: ''
+    RIN: 9.6
+    Sample_Group: Cancer
+    Sample_ID: '24'
+    paired_end: 0
+  '3':
+    260/230: 0.6
+    260/280: 2.15
+    Concentration: 62.2
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P11LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/3_S5_R1.fastq.gz,180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/3a_S2_R1.fastq.gz
+    R2: ''
+    RIN: 8.0
+    Sample_Group: Control
+    Sample_ID: '3'
+    paired_end: 0
+  3a:
+    260/230: 0.57
+    260/280: 1.9
+    Concentration: 13.2
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P7TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/3a_S2_R1.fastq.gz
+    R2: ''
+    RIN: 8.5
+    Sample_Group: Cancer
+    Sample_ID: 3a
+    paired_end: 0
+  '4':
+    260/230: 1.74
+    260/280: 2.1
+    Concentration: 37.4
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P11TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/4_S6_R1.fastq.gz
+    R2: ''
+    RIN: 8.6
+    Sample_Group: Cancer
+    Sample_ID: '4'
+    paired_end: 0
+  5a:
+    260/230: 1.0
+    260/280: 2.0
+    Concentration: 25.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P8LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: Prepped twice
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/5a_S3_R1.fastq.gz
+    R2: ''
+    RIN: 9.4
+    Sample_Group: Control
+    Sample_ID: 5a
+    paired_end: 0
+  7a:
+    260/230: 0.76
+    260/280: 2.04
+    Concentration: 42.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 2
+    External_ID: P8TuMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/7a_S4_R1.fastq.gz
+    R2: ''
+    RIN: 10.0
+    Sample_Group: Cancer
+    Sample_ID: 7a
+    paired_end: 0
+  '9':
+    260/230: 0.72
+    260/280: 2.09
+    Concentration: 260.0
+    Customer_Comment: RNA is Dnase treated
+    ERCC: 1
+    External_ID: P10LVMacro
+    Fragment_Length: 248
+    Fragment_SD: 10
+    Lab_Comment: ''
+    R1: 180420_NB501038_0108_AHG7N2BGX5/GCF-2017-475/9_S7_R1.fastq.gz
+    R2: ''
+    RIN: 6.9
+    Sample_Group: Control
+    Sample_ID: '9'
+    paired_end: 0
+split:
+  skip: true
+  sscol: Sample_Project
+  step: filter
