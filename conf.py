@@ -79,7 +79,7 @@ def get_data_from_samplesheet(fh):
             custom_opts = True
             continue
         elif custom_opts:
-            opts_d[line.split(',')[0].rstrip()] = line.split(',')[1].rstrip()
+            opts_d[line.split(',')[0].rstrip()] = line.split(',')[1].rstrip().lower in ['true']
 
 def get_project_samples_from_samplesheet(args):
     """
@@ -126,7 +126,7 @@ def find_samples(df, project_dirs):
             s_r1.extend(r1)
             s_r2.extend(r2)
         pe = 0 if len(s_r2) == 0 else 1
-        sample_dict[row.Sample_ID] = {
+        sample_dict[str(row.Sample_ID)] = {
                 'R1': ','.join(s_r1),
                 'R2': ','.join(s_r2),
                 'paired_end': pe,
