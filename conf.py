@@ -135,8 +135,8 @@ def find_samples(df, project_dirs):
 
     return sample_dict
 
-def merge_samples_with_submission_form(args,sample_dict):
-    customer = pd.read_excel(args.ssub.name,sheet_name=0,skiprows=14)
+def merge_samples_with_submission_form(ssub,sample_dict):
+    customer = pd.read_excel(ssub.name,sheet_name=0,skiprows=14)
     customer_column_map = {
             'Unique Sample ID': 'Sample_ID',
             'External ID (optional reference sample ID)': 'External_ID',
@@ -146,7 +146,7 @@ def merge_samples_with_submission_form(args,sample_dict):
     customer.rename(columns=customer_column_map,inplace=True)
     customer = customer[['Sample_ID','External_ID','Sample_Group','Customer_Comment']]
     check_existence_of_samples(sample_dict.keys(),customer)
-    lab = pd.read_excel(args.ssub.name,sheet_name=2)
+    lab = pd.read_excel(ssub.name,sheet_name=2)
     lab_column_map = {
             'Concentration (ng/ul)': 'Concentration',
             '260/280 ratio': '260/280',
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     s_df, opts = get_project_samples_from_samplesheet(args)
     sample_dict = find_samples(s_df,project_dirs)
     if args.ssub is not None:
-        sample_dict = merge_samples_with_submission_form(args,sample_dict)
+        sample_dict = merge_samples_with_submission_form(args.ssub,sample_dict)
     config =  create_default_config(sample_dict,opts,args,project_id=args.project_id)
     yaml.dump(config,args.output,default_flow_style=False)
 
