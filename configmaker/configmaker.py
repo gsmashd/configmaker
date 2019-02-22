@@ -36,12 +36,12 @@ def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
         msg = "{0} is not a valid GCF number (format: GCF-YYYY-NNN)".format(arg)
         raise argparse.ArgumentTypeError(msg)
 
-def _match_project_dir(pth):
+def _match_project_dir(pth,project_id):
     for fn in os.listdir(pth):
-        if os.path.isdir(os.path.join(pth,fn)) and fn == args.project_id:
+        if os.path.isdir(os.path.join(pth,fn)) and fn == project_id:
              return os.path.join(pth, fn)
-    msg = "{0} is not present in run_folder: {1}".format(args.project_id, pth)
-    raise argparse.ArgumentTypeError(msg)
+    msg = "{0} is not present in run_folder: {1}".format(project_id, pth)
+    raise ValueError(msg)
 
 def _match_samplesheet(pth):
     matches = glob.glob(os.path.join(pth, 'SampleSheet.csv'))
@@ -97,10 +97,10 @@ def get_project_samples_from_samplesheet(args):
     df = df.drop_duplicates(['Sample_ID'])
     return df, opts
 
-def inspect_dirs(runfolders):
+def inspect_dirs(runfolders,project_id):
     project_dirs = []
     for pth in runfolders:
-        pid = _match_project_dir(pth)
+        pid = _match_project_dir(pth,project_id)
         project_dirs.append(pid)
     return project_dirs
 
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     parser.add_argument("--libkit",  help="Library preparation kit. (if applicable for all samples). Overrides value from samplesheet.")
     
     args = parser.parse_args()
-    project_dirs = inspect_dirs(args.runfolders)
+    project_dirs = inspect_dirs(args.runfolders, args.project_id)
     s_df, opts = get_project_samples_from_samplesheet(args)
     sample_dict = find_samples(s_df,project_dirs)
     if args.ssub is not None:
