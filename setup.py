@@ -19,4 +19,5 @@ setup(
     scripts = ['configmaker/configmaker.py'],
     packages=['configmaker'],
     install_requiress=['glob', 're', 'pandas', 'argparse', 'logging','xlrd>=1.0.0'],
+    setup_requiress=['glob', 're', 'pandas', 'argparse', 'logging','xlrd>=1.0.0'],
 )
