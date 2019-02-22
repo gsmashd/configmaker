@@ -141,10 +141,11 @@ def merge_samples_with_submission_form(ssub,sample_dict):
             'Unique Sample ID': 'Sample_ID',
             'External ID (optional reference sample ID)': 'External_ID',
             'Sample Group (conditions to be compared)': 'Sample_Group',
-            'Comments (optional info that does not fit in other columns)': 'Customer_Comment'
+            'Comments (optional info that does not fit in other columns)': 'Customer_Comment',
+            'Sample biosource (examples: celltype/tissue/FFPE)': 'Sample_Biosource'
         }
     customer.rename(columns=customer_column_map,inplace=True)
-    customer = customer[['Sample_ID','External_ID','Sample_Group','Customer_Comment']]
+    customer = customer[['Sample_ID','External_ID','Sample_Group','Sample_Biosource','Customer_Comment']]
     check_existence_of_samples(sample_dict.keys(),customer)
     lab = pd.read_excel(ssub.name,sheet_name=2)
     lab_column_map = {
