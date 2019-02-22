@@ -16,5 +16,6 @@ setup(
     description = ("In-house tool to create configs used in bio informatics pipelines at GCF, NTNU, Trondheim."),
     license = "BSD",
     url = "https://github.com/gcf-trh/configmaker",
-    packages=['glob', 're', 'pandas', 'argparse', 'logging'],
+    packages=['configmaker'],
+    install_requiress=['glob', 're', 'pandas', 'argparse', 'logging'],
 )
