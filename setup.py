@@ -17,5 +17,4 @@ setup(
     license = "BSD",
     url = "https://github.com/gcf-trh/configmaker",
     packages=['glob', 're', 'pandas', 'argparse', 'logging'],
-    long_description=read('README'),
 )
