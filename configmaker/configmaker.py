@@ -47,21 +47,21 @@ def _match_samplesheet(pth):
     matches = glob.glob(os.path.join(pth, 'SampleSheet.csv'))
     return matches
 
-def inspect_samplesheet(args):
+def inspect_samplesheet(samplesheet,runfolders):
     """
     if --samplesheet is set: Check that file exists and return it.
     else: check that runfolder(s) contain a SampleSheet.csv and return it (them).
     """
-    if args.samplesheet is not None:
-        return [args.samplesheet.name]
+    if samplesheet is not None:
+        return [samplesheet.name]
     else:
         samplesheets = []
-        for pth in args.runfolders:
+        for pth in runfolders:
             ss = _match_samplesheet(pth)
             for s in ss:
                 samplesheets.append(s)
         if len(samplesheets) == 0:
-            msg = "Cannot find SampleSheet.csv in {}".format(', '.join(args.runfolders))
+            msg = "Cannot find SampleSheet.csv in {}".format(', '.join(runfolders))
             raise RuntimeError(msg)
         return samplesheets
 
@@ -81,18 +81,18 @@ def get_data_from_samplesheet(fh):
         elif custom_opts:
             opts_d[line.split(',')[0].rstrip()] = line.split(',')[1].rstrip().lower in ['true']
 
-def get_project_samples_from_samplesheet(args):
+def get_project_samples_from_samplesheet(samplesheet, runfolders, project_id):
     """
     Return a dataframe containing project samples
     """
-    ss = inspect_samplesheet(args)
+    ss = inspect_samplesheet(samplesheet,runfolders)
     df_list = []
     for sheet in ss:
         with open(sheet,'r') as s:
             data, opts = get_data_from_samplesheet(s)
             df_list.append(data)
     df = pd.concat(df_list)
-    df = df[df.Sample_Project == args.project_id]
+    df = df[df.Sample_Project == project_id]
     df = df[['Sample_ID']]
     df = df.drop_duplicates(['Sample_ID'])
     return df, opts
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     project_dirs = inspect_dirs(args.runfolders, args.project_id)
-    s_df, opts = get_project_samples_from_samplesheet(args)
+    s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     sample_dict = find_samples(s_df,project_dirs)
     if args.ssub is not None:
         sample_dict = merge_samples_with_submission_form(args.ssub,sample_dict)
