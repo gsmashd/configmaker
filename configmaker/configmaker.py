@@ -97,9 +97,9 @@ def get_project_samples_from_samplesheet(args):
     df = df.drop_duplicates(['Sample_ID'])
     return df, opts
 
-def inspect_dirs(args):
+def inspect_dirs(runfolders):
     project_dirs = []
-    for pth in args.runfolders:
+    for pth in runfolders:
         pid = _match_project_dir(pth)
         project_dirs.append(pid)
     return project_dirs
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     parser.add_argument("--libkit",  help="Library preparation kit. (if applicable for all samples). Overrides value from samplesheet.")
     
     args = parser.parse_args()
-    project_dirs = inspect_dirs(args)
+    project_dirs = inspect_dirs(args.runfolders)
     s_df, opts = get_project_samples_from_samplesheet(args)
     sample_dict = find_samples(s_df,project_dirs)
     if args.ssub is not None:
