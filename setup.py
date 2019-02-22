@@ -18,5 +18,5 @@ setup(
     url = "https://github.com/gcf-trh/configmaker",
     scripts = ['configmaker/configmaker.py'],
     packages=['configmaker'],
-    install_requiress=['glob', 're', 'pandas', 'argparse', 'logging'],
+    install_requiress=['glob', 're', 'pandas', 'argparse', 'logging','xlrd>=0.9.0'],
 )
