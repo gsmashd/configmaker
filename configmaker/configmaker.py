@@ -156,7 +156,10 @@ def merge_samples_with_submission_form(ssub,sample_dict):
         }
     lab.rename(columns=lab_column_map,inplace=True)
     lab = lab.drop(['Sample_Name','Project ID','KIT'],axis=1)
-    merge = pd.merge(customer,lab,on='Sample_ID',how='inner')
+    if not lab.empty:
+        merge = pd.merge(customer,lab,on='Sample_ID',how='inner')
+    else:
+        merge = customer
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
     sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
