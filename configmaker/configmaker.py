@@ -110,8 +110,8 @@ def match_fastq(sample_name, project_dir):
 
     Returns paths relative to project directory
     """
-    r1_fastq_files = glob.glob(os.path.join(project_dir, sample_name + '*R1.fastq.gz'), recursive=True)
-    r2_fastq_files = glob.glob(os.path.join(project_dir, sample_name + '*R2.fastq.gz'), recursive=True)
+    r1_fastq_files = glob.glob(os.path.join(project_dir, '**', sample_name + '*R1.fastq.gz'), recursive=True)
+    r2_fastq_files = glob.glob(os.path.join(project_dir, '**', sample_name + '*R2.fastq.gz'), recursive=True)
 
     r1 = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
     r2 = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
