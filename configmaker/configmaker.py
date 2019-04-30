@@ -206,8 +206,6 @@ def create_default_config(sample_dict, opts, args, project_id=None):
     filter['skip'] = True
     config['filter'] = filter
     config['samples'] = sample_dict
-
-    if 'Librep'
     
     return config
 
