@@ -179,7 +179,7 @@ def check_existence_of_samples(samples,df):
         logger.warning("WARNING Samples {} are contained in sample submission form, but not in SampleSheet!".format(', '.join(list(diff))))
     return None
 
-def create_default_config(sample_dict,opts,args,project_id=None):
+def create_default_config(sample_dict, opts, args, project_id=None):
     config = {}
     if project_id:
          config['project_id'] = project_id
@@ -187,19 +187,19 @@ def create_default_config(sample_dict,opts,args,project_id=None):
     config['interim_dir'] = 'data/tmp'
     config['processed_dir'] = 'data/processed'
     config.update(opts)
-    config['merge'] = {}
-    config['merge']['skip'] = False
-    config['merge']['step'] = 'quant'
-    config['merge']['sscol'] = 'Sample_ID'
-    config['split'] = {}
-    config['split']['skip'] = True
-    config['split']['step'] = 'filter'
-    config['split']['sscol'] = 'Sample_Project'
     if args.libkit is not None:
-        config['Libprep'] = args.libkit
+        config['libprep'] = args.libkit
     if args.organism is not None:
-        config['Organism'] = args.organism
+        config['organism'] = args.organism
+    db = {}
+    db['reference_db'] = 'ensembl'
+    config['db'] = db
+    filter = {}
+    filter['skip'] = True
+    config['filter'] = filter
     config['samples'] = sample_dict
+
+    
     return config
 
 
