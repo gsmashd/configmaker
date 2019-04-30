@@ -105,17 +105,17 @@ def inspect_dirs(runfolders,project_id):
         project_dirs.append(pid)
     return project_dirs
 
-def match_fastq(sample_name, project_dir):
+def match_fastq(sample_name, project_dir, rel_path=True):
     """Return fastq files matching a sample name.
 
     Returns paths relative to project directory
     """
-    r1_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '*R1*.fastq.gz'), recursive=True))
-    r2_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '*R2*.fastq.gz'), recursive=True))
-
-    r1 = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
-    r2 = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
-    return r1, r2
+    r1_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*_R1*.fastq.gz'), recursive=True))
+    r2_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*_R2*.fastq.gz'), recursive=True))
+    if rel_path:
+        r1_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
+        r2_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
+    return r1_fastq_files, r2_fastq_files
 
 def find_samples(df, project_dirs):
     sample_dict = {}
@@ -187,6 +187,14 @@ def create_default_config(sample_dict, opts, args, project_id=None):
     config['interim_dir'] = 'data/tmp'
     config['processed_dir'] = 'data/processed'
     config.update(opts)
+
+    if 'Libprep' in config:
+        config['libprep'] = config['Libprep']
+        del config['Librep']
+    if 'Organism' in config:
+        config['organism'] = config['Organism']
+        del config['Organism']
+
     if args.libkit is not None:
         config['libprep'] = args.libkit
     if args.organism is not None:
@@ -199,6 +207,7 @@ def create_default_config(sample_dict, opts, args, project_id=None):
     config['filter'] = filter
     config['samples'] = sample_dict
 
+    if 'Librep'
     
     return config
 
@@ -213,6 +222,7 @@ if __name__ == '__main__':
     parser.add_argument("--sample-submission-form", dest="ssub", type=argparse.FileType('r'), help="GCF Sample Submission Form")
     parser.add_argument("--organism",  help="Organism (if applicable to all samples). Overrides value from samplesheet.")
     parser.add_argument("--libkit",  help="Library preparation kit. (if applicable for all samples). Overrides value from samplesheet.")
+    parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     
     args = parser.parse_args()
     project_dirs = inspect_dirs(args.runfolders, args.project_id)
@@ -223,3 +233,15 @@ if __name__ == '__main__':
     config =  create_default_config(sample_dict,opts,args,project_id=args.project_id)
     yaml.dump(config,args.output,default_flow_style=False)
 
+    if args.create_fastq_dir:
+        default_fastq_dir = 'data/raw/fastq'
+        os.makedirs(default_fastq_dir, exist_ok=True)
+        for sample_id in config['samples'].keys():
+            for pid in project_dirs:
+                r1_src, r2_src = match_fastq(sample_id, pid, rel_path=False)
+                r1_dst, r2_dst = match_fastq(sample_id, pid, rel_path=True)
+                for src, dst in zip(r1_src, r1_dst):
+                    dst = os.path.join(default_fastq_dir, dst)
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    os.symlink(src, dst)
+                
