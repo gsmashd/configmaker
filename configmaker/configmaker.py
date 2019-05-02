@@ -190,7 +190,7 @@ def create_default_config(sample_dict, opts, args, project_id=None):
 
     if 'Libprep' in config:
         config['libprep'] = config['Libprep']
-        del config['Librep']
+        del config['Libprep']
     if 'Organism' in config:
         config['organism'] = config['Organism']
         del config['Organism']
