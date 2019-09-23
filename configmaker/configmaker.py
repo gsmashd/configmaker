@@ -169,7 +169,6 @@ def merge_samples_with_submission_form(ssub, sample_dict):
     merge.set_index(['Sample_ID'],drop=True)
     merge.fillna('',inplace=True)
     s_dict = merge.to_dict(orient='index')
-
     return s_dict
 
 def check_existence_of_samples(samples, df):
