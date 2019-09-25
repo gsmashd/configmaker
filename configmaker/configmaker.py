@@ -166,9 +166,12 @@ def merge_samples_with_submission_form(ssub, sample_dict):
     else:
         merge = customer
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
-    merge.set_index(['Sample_ID'],drop=True)
-    merge.fillna('',inplace=True)
-    s_dict = merge.to_dict(orient='index')
+    sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
+    sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
+    sample_df.reset_index()
+    sample_df.index = sample_df['Sample_ID']
+    sample_df.fillna('',inplace=True)
+    s_dict = sample_df.to_dict(orient='index')
     return s_dict
 
 def check_existence_of_samples(samples, df):
