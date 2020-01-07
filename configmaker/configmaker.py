@@ -114,8 +114,8 @@ def match_fastq(sample_name, project_dir, rel_path=True):
 
     Returns paths relative to project directory
     """
-    r1_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*_R1*.fastq.gz'), recursive=True))
-    r2_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*_R2*.fastq.gz'), recursive=True))
+    r1_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*R1*.fastq.gz'), recursive=True))
+    r2_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*R2*.fastq.gz'), recursive=True))
     if rel_path:
         r1_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
         r2_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
@@ -204,9 +204,6 @@ def create_default_config(sample_dict, opts, args, read_geometry, project_id=Non
     config = {}
     if project_id:
          config['project_id'] = project_id
-    config['ext_dir'] = 'data/ext'
-    config['interim_dir'] = 'data/tmp'
-    config['processed_dir'] = 'data/processed'
     config['read_geometry'] = read_geometry
 
     if 'Libprep' in opts:
@@ -217,18 +214,9 @@ def create_default_config(sample_dict, opts, args, read_geometry, project_id=Non
         config['libprepkit'] = args.libkit
     if args.organism is not None:
         config['organism'] = args.organism
-    
-    db = {}
-    db['reference_db'] = 'ensembl'
-    config['db'] = db
-    filter = {}
-    filter['skip'] = True
-    config['filter'] = filter
-    config['quant'] = ''
-    config['analysis'] = ''
 
     config['samples'] = sample_dict
-    
+
     return config
 
 
