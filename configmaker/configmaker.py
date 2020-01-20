@@ -214,6 +214,8 @@ def create_default_config(sample_dict, opts, args, read_geometry, project_id=Non
         config['libprepkit'] = args.libkit
     if args.organism is not None:
         config['organism'] = args.organism
+    if args.instrument is not None:
+        config['machine'] = args.instrument
 
     config['samples'] = sample_dict
 
@@ -230,6 +232,7 @@ if __name__ == '__main__':
     parser.add_argument("-S", "--sample-submission-form", dest="ssub", type=argparse.FileType('r'), help="GCF Sample Submission Form")
     parser.add_argument("--organism",  help="Organism (if applicable to all samples). Overrides value from samplesheet.")
     parser.add_argument("--libkit",  help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet.")
+    parser.add_argument("--machine",  help="Sequencer model.")
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     
     args = parser.parse_args()
