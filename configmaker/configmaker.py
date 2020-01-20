@@ -214,8 +214,8 @@ def create_default_config(sample_dict, opts, args, read_geometry, project_id=Non
         config['libprepkit'] = args.libkit
     if args.organism is not None:
         config['organism'] = args.organism
-    if args.instrument is not None:
-        config['machine'] = args.instrument
+    if args.machine is not None:
+        config['machine'] = args.machine
 
     config['samples'] = sample_dict
 
