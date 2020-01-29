@@ -41,6 +41,8 @@ def is_dir(dirname):
         return dirname
 
 def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
+    if arg is None:
+        return True
     m = re.match(patt, arg)
     if m:
         return m.group().strip()
@@ -48,13 +50,26 @@ def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
         msg = "{0} is not a valid GCF number (format: GCF-YYYY-NNN)".format(arg)
         raise argparse.ArgumentTypeError(msg)
 
-def _match_project_dir(pth, project_id):
-    for fn in os.listdir(pth):
-        if os.path.isdir(os.path.join(pth, fn)) and fn == project_id:
-             return os.path.join(pth, fn)
-    msg = "{0} is not present in run_folder: {1}".format(project_id, pth)
-    raise ValueError(msg)
-
+def _match_project_dir(pth, project_id=None):
+    
+    if project_id:
+        for fn in os.listdir(pth):
+            if os.path.isdir(os.path.join(pth, fn)) and fn == project_id:
+                return os.path.join(pth, fn), project_id
+        msg = "{0} is not present in run_folder: {1}".format(project_id, pth)
+        raise ValueError(msg)
+    else:
+        project_dir = None
+        for fn in os.listdir(pth):
+            if os.path.isdir(os.path.join(pth, fn)) and re.match('GCF-\d{4}-\d{3}', fn):
+                if project_dir is not None:
+                    raise ValueError('runfolders contain more than one project folders. Use `--project-id` option to choose one.')
+                project_dir = os.path.join(pth, fn)
+                project_id = fn
+        if project_dir:
+            return project_dir, project_id
+        raise ValueError('failed to identify any valid projects in runfolder: {}'.format(pth))
+    
 def _match_samplesheet(pth):
     matches = glob.glob(os.path.join(pth, 'SampleSheet.csv'))
     return matches
@@ -113,12 +128,18 @@ def get_project_samples_from_samplesheet(samplesheet, runfolders, project_id):
     df = df.drop_duplicates(['Sample_ID'])
     return df, opts
 
-def inspect_dirs(runfolders, project_id):
+def inspect_dirs(runfolders, project_id=None):
     project_dirs = []
+    project_ids = set()
     for pth in runfolders:
-        pid = _match_project_dir(pth,project_id)
-        project_dirs.append(pid)
-    return project_dirs
+        pdir, pid = _match_project_dir(pth, project_id)
+        project_dirs.append(pdir)
+        project_ids.add(pid)
+    if len(project_ids) > 1:
+        raise ValueError('runfolders contain more than one GCF project ID. Use `--project-id` option to choose one.')
+    elif len(project_ids) == 1:
+        project_id = project_ids.pop()
+    return project_dirs, project_id
 
 def match_fastq(sample_name, project_dir, rel_path=True):
     """Return fastq files matching a sample name.
@@ -260,7 +281,7 @@ def create_default_config(sample_dict, opts, args, project_id=None, fastq_dir=No
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-p", "--project-id" , help="Project ID", default="GCF-0000-000", type=is_valid_gcf_id)
+    parser.add_argument("-p", "--project-id" , help="Project ID", default=None, type=is_valid_gcf_id)
     parser.add_argument("runfolders", nargs="+", help="Path(s) to flowcell dir(s)", action=FullPaths, type=is_dir)
     parser.add_argument("-s", "--sample-sheet", dest="samplesheet", type=argparse.FileType('r'), help="IEM Samplesheet")
     parser.add_argument("-o", "--output", default="config.yaml", help="Output config file", type=argparse.FileType('w'))
@@ -271,7 +292,7 @@ if __name__ == '__main__':
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     
     args = parser.parse_args()
-    project_dirs = inspect_dirs(args.runfolders, args.project_id)
+    project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     sample_dict = find_samples(s_df, project_dirs)
 
