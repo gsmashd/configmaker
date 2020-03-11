@@ -9,6 +9,7 @@ import pandas as pd
 import yaml
 import logging
 import json
+import warnings
 
 logger = logging.getLogger('GCF-configmaker')
 logger.setLevel(logging.WARNING)
@@ -146,11 +147,25 @@ def match_fastq(sample_name, project_dir, rel_path=True):
 
     Returns paths relative to project directory
     """
-    r1_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*R1*.fastq.gz'), recursive=True))
-    r2_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*R2*.fastq.gz'), recursive=True))
+    r1_fastq_files, r2_fastq_files = [],[]
+    for fn in  os.listdir(project_dir):
+        if fn == '{}_R1.fastq.gz'.format(sample_name):
+            r1_fastq_files.extend([os.path.join(project_dir, fn)])
+        elif fn == '{}_R2.fastq.gz'.format(sample_name):
+            r2_fastq_files.extend([os.path.join(project_dir, fn)])
+        else:
+            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1.001.fastq.gz')))
+            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1.001.fastq.gz')))
+    
+    if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
+        warnings.warn('Failed to match sample: {} with any fastq files'.format(sample_name))
+        return None, None
+    r1_fastq_files = sorted(r1_fastq_files)
+    r2_fastq_files = sorted(r2_fastq_files)
     if rel_path:
-        r1_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
-        r2_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
+        r1_fastq_files = [os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
+        r2_fastq_files = [os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
+    
     return r1_fastq_files, r2_fastq_files
 
 def find_samples(df, project_dirs):
@@ -160,16 +175,20 @@ def find_samples(df, project_dirs):
         s_r2 = []
         for p_pth in project_dirs:
             r1, r2 = match_fastq(row.Sample_ID, p_pth)
-            s_r1.extend(r1)
-            s_r2.extend(r2)
-        pe = 0 if len(s_r2) == 0 else 1
-        sample_dict[str(row.Sample_ID)] = {
+            if r1 is not None:
+                s_r1.extend(r1)
+            if r2 is not None:
+                s_r2.extend(r2)
+        if all([i is None for i in s_r1]) and all([i is None for i in s_r2]):
+            warnings.warn('removing sample {} from SampleSheet due to missing fastq files!'.format(row.Sample_ID))
+        else:
+            pe = 0 if len(s_r2) == 0 else 1
+            sample_dict[str(row.Sample_ID)] = {
                 'R1': ','.join(s_r1),
                 'R2': ','.join(s_r2),
                 'paired_end': pe,
                 'Sample_ID': row.Sample_ID,
             }
-
     return sample_dict
 
 def merge_samples_with_submission_form(ssub, sample_dict):
@@ -182,8 +201,8 @@ def merge_samples_with_submission_form(ssub, sample_dict):
         'Sample biosource (examples: celltype/tissue/FFPE)': 'Sample_Biosource',
         'Project ID': 'Project_ID',
         'Sample type (e.g RNA or DNA or library)': 'Sample_Type',
-        'Index1_p7 (If dual indexed libraries are submitted indicate what index sequence is used P7)': 'Index',
-        'Index2_p5 (If libraries are submitted  indicate what index sequence is used P75)': 'Index2',
+        'Index2_p5 (If dual indexed libraries are submitted, indicate what index sequence is used as p5)': 'Index',
+        'Index1_p7 (If libraries are submitted, indicate what index sequence is used as P7)': 'Index2',
         'Plate location (if samples delivered in 96 well plates)': 'Plate',
         'Sample Buffer': 'Sample_Buffer',
         'Volume (ul)': 'Volume',
@@ -194,7 +213,7 @@ def merge_samples_with_submission_form(ssub, sample_dict):
         }
     customer.rename(columns=customer_column_map, inplace=True)
     remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
-    customer.drop(remove_cols, axis=1, inplace=True)
+    customer = customer.drop(remove_cols, axis=1, errors='ignore')
 
     check_existence_of_samples(sample_dict.keys(), customer)
     lab = pd.read_excel(ssub.name, sheet_name=2)
@@ -316,13 +335,15 @@ if __name__ == '__main__':
                 r1_src, r2_src = match_fastq(sample_id, pid, rel_path=False)
                 r1_dst, r2_dst = match_fastq(sample_id, pid, rel_path=True)
                 for src, dst in zip(r1_src, r1_dst):
-                    dst = os.path.join(default_fastq_dir, dst)
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    os.symlink(src, dst)
+                    if src is not None:
+                        dst = os.path.join(default_fastq_dir, dst)
+                        os.makedirs(os.path.dirname(dst), exist_ok=True)
+                        os.symlink(src, dst)
                 for src, dst in zip(r2_src, r2_dst):
-                    dst = os.path.join(default_fastq_dir, dst)
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    os.symlink(src, dst)
+                    if src is not None: 
+                        dst = os.path.join(default_fastq_dir, dst)
+                        os.makedirs(os.path.dirname(dst), exist_ok=True)
+                        os.symlink(src, dst)
         fastq_dir = default_fastq_dir
 
     config =  create_default_config(sample_dict, opts, args, project_id=args.project_id, fastq_dir=fastq_dir)
