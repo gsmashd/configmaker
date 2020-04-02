@@ -9,9 +9,21 @@ import pandas as pd
 import yaml
 import logging
 import json
+import warnings
 
 logger = logging.getLogger('GCF-configmaker')
 logger.setLevel(logging.WARNING)
+
+
+
+SEQUENCERS = {
+    'NB501038' : 'NextSeq 500',
+    'SN7001334' : 'HiSeq 2500',
+    'K00251' : 'HiSeq 4000',
+    'M02675' : 'MiSeq NTNU',
+    'M03942' : 'MiSeq StOlav',
+    'M05617' : 'MiSeq SINTEF'
+}
 
 
 class FullPaths(argparse.Action):
@@ -30,6 +42,8 @@ def is_dir(dirname):
         return dirname
 
 def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
+    if arg is None:
+        return True
     m = re.match(patt, arg)
     if m:
         return m.group().strip()
@@ -37,18 +51,31 @@ def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
         msg = "{0} is not a valid GCF number (format: GCF-YYYY-NNN)".format(arg)
         raise argparse.ArgumentTypeError(msg)
 
-def _match_project_dir(pth,project_id):
-    for fn in os.listdir(pth):
-        if os.path.isdir(os.path.join(pth,fn)) and fn == project_id:
-             return os.path.join(pth, fn)
-    msg = "{0} is not present in run_folder: {1}".format(project_id, pth)
-    raise ValueError(msg)
-
+def _match_project_dir(pth, project_id=None):
+    
+    if project_id:
+        for fn in os.listdir(pth):
+            if os.path.isdir(os.path.join(pth, fn)) and fn == project_id:
+                return os.path.join(pth, fn), project_id
+        msg = "{0} is not present in run_folder: {1}".format(project_id, pth)
+        raise ValueError(msg)
+    else:
+        project_dir = None
+        for fn in os.listdir(pth):
+            if os.path.isdir(os.path.join(pth, fn)) and re.match('GCF-\d{4}-\d{3}', fn):
+                if project_dir is not None:
+                    raise ValueError('runfolders contain more than one project folders. Use `--project-id` option to choose one.')
+                project_dir = os.path.join(pth, fn)
+                project_id = fn
+        if project_dir:
+            return project_dir, project_id
+        raise ValueError('failed to identify any valid projects in runfolder: {}'.format(pth))
+    
 def _match_samplesheet(pth):
     matches = glob.glob(os.path.join(pth, 'SampleSheet.csv'))
     return matches
 
-def inspect_samplesheet(samplesheet,runfolders):
+def inspect_samplesheet(samplesheet, runfolders):
     """
     if --samplesheet is set: Check that file exists and return it.
     else: check that runfolder(s) contain a SampleSheet.csv and return it (them).
@@ -102,23 +129,43 @@ def get_project_samples_from_samplesheet(samplesheet, runfolders, project_id):
     df = df.drop_duplicates(['Sample_ID'])
     return df, opts
 
-def inspect_dirs(runfolders, project_id):
+def inspect_dirs(runfolders, project_id=None):
     project_dirs = []
+    project_ids = set()
     for pth in runfolders:
-        pid = _match_project_dir(pth,project_id)
-        project_dirs.append(pid)
-    return project_dirs
+        pdir, pid = _match_project_dir(pth, project_id)
+        project_dirs.append(pdir)
+        project_ids.add(pid)
+    if len(project_ids) > 1:
+        raise ValueError('runfolders contain more than one GCF project ID. Use `--project-id` option to choose one.')
+    elif len(project_ids) == 1:
+        project_id = project_ids.pop()
+    return project_dirs, project_id
 
 def match_fastq(sample_name, project_dir, rel_path=True):
     """Return fastq files matching a sample name.
 
     Returns paths relative to project directory
     """
-    r1_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*R1*.fastq.gz'), recursive=True))
-    r2_fastq_files = sorted(glob.glob(os.path.join(project_dir, '**', sample_name + '_*R2*.fastq.gz'), recursive=True))
+    r1_fastq_files, r2_fastq_files = [],[]
+    for fn in  os.listdir(project_dir):
+        if fn == '{}_R1.fastq.gz'.format(sample_name):
+            r1_fastq_files.extend([os.path.join(project_dir, fn)])
+        elif fn == '{}_R2.fastq.gz'.format(sample_name):
+            r2_fastq_files.extend([os.path.join(project_dir, fn)])
+        else:
+            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1.001.fastq.gz')))
+            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1.001.fastq.gz')))
+    
+    if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
+        warnings.warn('Failed to match sample: {} with any fastq files'.format(sample_name))
+        return None, None
+    r1_fastq_files = sorted(r1_fastq_files)
+    r2_fastq_files = sorted(r2_fastq_files)
     if rel_path:
-        r1_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
-        r2_fastq_files = [os.path.relpath(x,os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
+        r1_fastq_files = [os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
+        r2_fastq_files = [os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
+    
     return r1_fastq_files, r2_fastq_files
 
 def find_samples(df, project_dirs):
@@ -128,29 +175,46 @@ def find_samples(df, project_dirs):
         s_r2 = []
         for p_pth in project_dirs:
             r1, r2 = match_fastq(row.Sample_ID, p_pth)
-            s_r1.extend(r1)
-            s_r2.extend(r2)
-        pe = 0 if len(s_r2) == 0 else 1
-        sample_dict[str(row.Sample_ID)] = {
+            if r1 is not None:
+                s_r1.extend(r1)
+            if r2 is not None:
+                s_r2.extend(r2)
+        if all([i is None for i in s_r1]) and all([i is None for i in s_r2]):
+            warnings.warn('removing sample {} from SampleSheet due to missing fastq files!'.format(row.Sample_ID))
+        else:
+            pe = 0 if len(s_r2) == 0 else 1
+            sample_dict[str(row.Sample_ID)] = {
                 'R1': ','.join(s_r1),
                 'R2': ','.join(s_r2),
                 'paired_end': pe,
                 'Sample_ID': row.Sample_ID,
             }
-
     return sample_dict
 
 def merge_samples_with_submission_form(ssub, sample_dict):
     customer = pd.read_excel(ssub.name, sheet_name=0, skiprows=14)
     customer_column_map = {
-            'Unique Sample ID': 'Sample_ID',
-            'External ID (optional reference sample ID)': 'External_ID',
-            'Sample Group (conditions to be compared)': 'Sample_Group',
-            'Comments (optional info that does not fit in other columns)': 'Customer_Comment',
-            'Sample biosource (examples: celltype/tissue/FFPE)': 'Sample_Biosource'
+        'Unique Sample ID': 'Sample_ID',
+        'External ID (optional reference sample ID)': 'External_ID',
+        'Sample Group (conditions to be compared)': 'Sample_Group',
+        'Comments (optional info that does not fit in other columns)': 'Customer_Comment',
+        'Sample biosource (examples: celltype/tissue/FFPE)': 'Sample_Biosource',
+        'Project ID': 'Project_ID',
+        'Sample type (e.g RNA or DNA or library)': 'Sample_Type',
+        'Index2_p5 (If dual indexed libraries are submitted, indicate what index sequence is used as p5)': 'Index',
+        'Index1_p7 (If libraries are submitted, indicate what index sequence is used as P7)': 'Index2',
+        'Plate location (if samples delivered in 96 well plates)': 'Plate',
+        'Sample Buffer': 'Sample_Buffer',
+        'Volume (ul)': 'Volume',
+        'Quantification Method': 'Quantification_Method',
+        'Concentration (ng/ul)': 'Concentration',
+        '260/280 ratio': '260/280',
+        '260/230 ratio': '260/230',
         }
     customer.rename(columns=customer_column_map, inplace=True)
-    customer = customer[['Sample_ID','External_ID','Sample_Group','Sample_Biosource','Customer_Comment']]
+    remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
+    customer = customer.drop(remove_cols, axis=1, errors='ignore')
+
     check_existence_of_samples(sample_dict.keys(), customer)
     lab = pd.read_excel(ssub.name, sheet_name=2)
     lab_column_map = {
@@ -177,12 +241,11 @@ def merge_samples_with_submission_form(ssub, sample_dict):
 def check_existence_of_samples(samples, df):
     diff = set(samples) - set(df['Sample_ID'].astype(str))
     if diff:
-        logger.warning("WARNING Samples {} are contained in SampleSheet, but not in sample submission form!".format(', '.join(list(diff))))
+        logger.warning("WARNING: Samples {} are contained in SampleSheet, but not in sample submission form!".format(', '.join(list(diff))))
     diff = set(df['Sample_ID'].astype(str)) - set(samples)
     if diff:
-        logger.warning("WARNING Samples {} are contained in sample submission form, but not in SampleSheet!".format(', '.join(list(diff))))
+        logger.warning("WARNING: Samples {} are contained in sample submission form, but not in SampleSheet!".format(', '.join(list(diff))))
     return None
-
 
 def find_read_geometry(runfolders):
     all = set()
@@ -199,24 +262,36 @@ def find_read_geometry(runfolders):
         raise ValueError('Read geometry mismatch between runfolders. Check Stats.json!')
     return read_geometry
 
-    
-def create_default_config(sample_dict, opts, args, read_geometry, project_id=None):
+def find_machine(runfolders):
+    matches = set()
+    for pth in runfolders:
+        machine_code = os.path.basename(pth).split('_')[1]
+        machine = SEQUENCERS.get(machine_code, '')
+        matches.add(machine)
+    if len(matches) > 1:
+        logger.warning('Multiple sequencing machines identified!')
+    return '|'.join(list(matches))
+        
+def create_default_config(sample_dict, opts, args, project_id=None, fastq_dir=None):
     config = {}
     if project_id:
          config['project_id'] = project_id
-    config['read_geometry'] = read_geometry
+
+    if 'Organism' in opts:
+        config['organism'] = opts['Organism']
+    if args.organism is not None:
+        config['organism'] = args.organism
 
     if 'Libprep' in opts:
         config['libprepkit'] = opts['Libprep']
-    if 'Organism' in opts:
-        config['organism'] = opts['Organism']
     if args.libkit is not None:
         config['libprepkit'] = args.libkit
-    if args.organism is not None:
-        config['organism'] = args.organism
-    if args.machine is not None:
-        config['machine'] = args.machine
 
+    config['read_geometry'] = find_read_geometry(args.runfolders)
+    config['machine'] = args.machine or find_machine(args.runfolders)
+    if fastq_dir:
+        config['fastq_dir'] = fastq_dir
+    
     config['samples'] = sample_dict
 
     return config
@@ -225,7 +300,7 @@ def create_default_config(sample_dict, opts, args, read_geometry, project_id=Non
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-p", "--project-id" , help="Project ID", default="GCF-0000-000", type=is_valid_gcf_id)
+    parser.add_argument("-p", "--project-id" , help="Project ID", default=None, type=is_valid_gcf_id)
     parser.add_argument("runfolders", nargs="+", help="Path(s) to flowcell dir(s)", action=FullPaths, type=is_dir)
     parser.add_argument("-s", "--sample-sheet", dest="samplesheet", type=argparse.FileType('r'), help="IEM Samplesheet")
     parser.add_argument("-o", "--output", default="config.yaml", help="Output config file", type=argparse.FileType('w'))
@@ -236,29 +311,41 @@ if __name__ == '__main__':
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     
     args = parser.parse_args()
-    project_dirs = inspect_dirs(args.runfolders, args.project_id)
+    project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     sample_dict = find_samples(s_df, project_dirs)
+
+    if args.ssub is None:
+        if len(args.runfolders) == 1:
+            ssub_fn = os.path.join(args.runfolders[0], 'Sample-Submission-Form.xlsx')
+            if os.path.exists(ssub_fn):
+                args.ssub = open(ssub_fn, 'rb')
+        else:
+            raise ValueError('`--sample-submission-form` option is required with multiple runfolders.')
+    
     if args.ssub is not None:
         sample_dict = merge_samples_with_submission_form(args.ssub, sample_dict)
-    read_geometry = find_read_geometry(args.runfolders)
-    config =  create_default_config(sample_dict, opts, args, read_geometry, project_id=args.project_id)
-    
+
+    fastq_dir = None
     if args.create_fastq_dir:
         default_fastq_dir = 'data/raw/fastq'
         os.makedirs(default_fastq_dir, exist_ok=True)
-        for sample_id in config['samples'].keys():
+        for sample_id in sample_dict.keys():
             for pid in project_dirs:
                 r1_src, r2_src = match_fastq(sample_id, pid, rel_path=False)
                 r1_dst, r2_dst = match_fastq(sample_id, pid, rel_path=True)
                 for src, dst in zip(r1_src, r1_dst):
-                    dst = os.path.join(default_fastq_dir, dst)
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    os.symlink(src, dst)
+                    if src is not None:
+                        dst = os.path.join(default_fastq_dir, dst)
+                        os.makedirs(os.path.dirname(dst), exist_ok=True)
+                        os.symlink(src, dst)
                 for src, dst in zip(r2_src, r2_dst):
-                    dst = os.path.join(default_fastq_dir, dst)
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    os.symlink(src, dst)
-        config['fastq_dir'] = default_fastq_dir
+                    if src is not None: 
+                        dst = os.path.join(default_fastq_dir, dst)
+                        os.makedirs(os.path.dirname(dst), exist_ok=True)
+                        os.symlink(src, dst)
+        fastq_dir = default_fastq_dir
 
-    yaml.dump(config, args.output, default_flow_style=False)
+    config =  create_default_config(sample_dict, opts, args, project_id=args.project_id, fastq_dir=fastq_dir)
+
+    yaml.dump(config, args.output, default_flow_style=False, sort_keys=False)
