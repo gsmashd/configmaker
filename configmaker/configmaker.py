@@ -171,14 +171,14 @@ def match_fastq(sample_name, project_dir, rel_path=True):
 def find_samples(df, project_dirs):
     sample_dict = {}
     for index, row in df.iterrows():
-        s_r1 = set()
-        s_r2 = set()
+        s_r1 = []
+        s_r2 = []
         for p_pth in project_dirs:
             r1, r2 = match_fastq(row.Sample_ID, p_pth)
             if r1 is not None:
-                s_r1.update(r1)
+                s_r1.extend(r1)
             if r2 is not None:
-                s_r2.update(r2)
+                s_r2.extend(r2)
         if all([i is None for i in s_r1]) and all([i is None for i in s_r2]):
             warn_str = 'removing sample {} from SampleSheet due to missing fastq files!'.format(row.Sample_ID)
             warnings.warn(warn_str)
