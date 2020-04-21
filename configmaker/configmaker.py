@@ -153,12 +153,12 @@ def match_fastq(sample_name, project_dir, rel_path=True):
             r1_fastq_files.extend([os.path.join(project_dir, fn)])
         elif fn == '{}_R2.fastq.gz'.format(sample_name):
             r2_fastq_files.extend([os.path.join(project_dir, fn)])
-        else:
-            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1.001.fastq.gz')))
-            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1.001.fastq.gz')))
-    
+        elif fn == sample_name:
+            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1_001.fastq.gz')))
+            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R2_001.fastq.gz')))
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
-        warnings.warn('Failed to match sample: {} with any fastq files'.format(sample_name))
+        warn_msg = 'Failed to match sample: {} with any fastq files'.format(sample_name)
+        warnings.warn(warn_msg)
         return None, None
     r1_fastq_files = sorted(r1_fastq_files)
     r2_fastq_files = sorted(r2_fastq_files)
@@ -180,7 +180,8 @@ def find_samples(df, project_dirs):
             if r2 is not None:
                 s_r2.extend(r2)
         if all([i is None for i in s_r1]) and all([i is None for i in s_r2]):
-            warnings.warn('removing sample {} from SampleSheet due to missing fastq files!'.format(row.Sample_ID))
+            warn_str = 'removing sample {} from SampleSheet due to missing fastq files!'.format(row.Sample_ID)
+            warnings.warn(warn_str)
         else:
             pe = 0 if len(s_r2) == 0 else 1
             sample_dict[str(row.Sample_ID)] = {
