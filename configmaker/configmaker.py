@@ -123,7 +123,8 @@ def get_project_samples_from_samplesheet(samplesheet, runfolders, project_id):
             data, opts = get_data_from_samplesheet(s)
             df_list.append(data)
     df = pd.concat(df_list)
-    df = df[df.Sample_Project.isin(project_id)]
+    if project_id:
+        df = df[df.Sample_Project.isin(project_id)]
     df['Sample_ID'] = df['Sample_ID'].astype(str)
     df = df[['Sample_ID']]
     df = df.drop_duplicates(['Sample_ID'])
