@@ -222,7 +222,6 @@ def merge_samples_with_submission_form(ssub, sample_dict):
         remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
         customer = customer.drop(remove_cols, axis=1, errors='ignore')
 
-        check_existence_of_samples(sample_dict.keys(), customer)
         lab = pd.read_excel(ssub[pth].name, sheet_name=2)
         lab.rename(columns=lab_column_map, inplace=True)
         lab = lab.drop(['Sample_Name','Project ID','KIT'], axis=1)
@@ -236,6 +235,7 @@ def merge_samples_with_submission_form(ssub, sample_dict):
     for df in merge_l:
         merge = merge.append(df, ignore_index=True)
 
+    check_existence_of_samples(sample_dict.keys(), merge)
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
     sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
@@ -319,7 +319,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
-    print(project_dirs)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     sample_dict = find_samples(s_df, project_dirs)
 
