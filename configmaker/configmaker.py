@@ -155,8 +155,8 @@ def match_fastq(sample_name, project_dir, rel_path=True):
             r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1_001.fastq.gz')))
             r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R2_001.fastq.gz')))
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
-        warn_msg = 'Failed to match sample: {} with any fastq files'.format(sample_name)
-        warnings.warn(warn_msg)
+        #warn_msg = 'Failed to match sample: {} with any fastq files in {}'.format(sample_name, project_dir)
+        #warnings.warn(warn_msg)
         return None, None
     r1_fastq_files = sorted(r1_fastq_files)
     r2_fastq_files = sorted(r2_fastq_files)
@@ -190,7 +190,7 @@ def find_samples(df, project_dirs):
             }
     return sample_dict
 
-def merge_samples_with_submission_form(ssub, sample_dict):
+def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None):
     customer_column_map = {
         'Unique Sample ID': 'Sample_ID',
         'External ID (optional reference sample ID)': 'External_ID',
@@ -242,6 +242,10 @@ def merge_samples_with_submission_form(ssub, sample_dict):
     sample_df.reset_index()
     sample_df.index = sample_df['Sample_ID']
     sample_df.fillna('',inplace=True)
+    if new_project_id:
+        sample_df.rename(columns={'Project_ID': 'Src_Project_ID'}, inplace=True)
+        sample_df.insert(loc=0, column="Project_ID", value=[new_project_id]*len(sample_df))
+
     s_dict = sample_df.to_dict(orient='index')
     return s_dict
 
@@ -279,10 +283,14 @@ def find_machine(runfolders):
         logger.warning('Multiple sequencing machines identified!')
     return '|'.join(list(matches))
 
-def create_default_config(sample_dict, opts, args, project_id=None, fastq_dir=None):
+def create_default_config(sample_dict, opts, args, fastq_dir=None):
     config = {}
-    if project_id:
-         config['project_id'] = project_id
+
+    if args.new_project_id:
+         config['project_id'] = args.new_project_id
+         config['src_project_id'] = args.project_id
+    else:
+         config['project_id'] = args.project_id
 
     if 'Organism' in opts:
         config['organism'] = opts['Organism']
@@ -308,6 +316,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-p", "--project-id", nargs="+", help="Project ID", default=None, type=is_valid_gcf_id)
+    parser.add_argument("-P", "--new-project-id", help="New Project ID", default=None, type=is_valid_gcf_id)
     parser.add_argument("runfolders", nargs="+", help="Path(s) to flowcell dir(s)", action=FullPaths, type=is_dir)
     parser.add_argument("-s", "--sample-sheet", dest="samplesheet", type=argparse.FileType('r'), help="IEM Samplesheet")
     parser.add_argument("-o", "--output", default="config.yaml", help="Output config file", type=argparse.FileType('w'))
@@ -333,7 +342,7 @@ if __name__ == '__main__':
         args.ssub = ssub_d
 
     if args.ssub is not None:
-        sample_dict = merge_samples_with_submission_form(args.ssub, sample_dict)
+        sample_dict = merge_samples_with_submission_form(args.ssub, sample_dict, new_project_id=args.new_project_id)
 
     fastq_dir = None
     if args.create_fastq_dir:
@@ -357,6 +366,6 @@ if __name__ == '__main__':
                         os.symlink(src, dst)
         fastq_dir = default_fastq_dir
 
-    config = create_default_config(sample_dict, opts, args, project_id=args.project_id, fastq_dir=fastq_dir)
+    config = create_default_config(sample_dict, opts, args, fastq_dir=fastq_dir)
 
     yaml.dump(config, args.output, default_flow_style=False, sort_keys=False)
