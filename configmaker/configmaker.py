@@ -52,11 +52,11 @@ def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
         raise argparse.ArgumentTypeError(msg)
 
 def _match_project_dir(pth, project_id=None):
-    
+
     if project_id:
         for fn in os.listdir(pth):
-            if os.path.isdir(os.path.join(pth, fn)) and fn == project_id:
-                return os.path.join(pth, fn), project_id
+            if os.path.isdir(os.path.join(pth, fn)) and fn in project_id:
+                return os.path.join(pth, fn), fn
         msg = "{0} is not present in run_folder: {1}".format(project_id, pth)
         raise ValueError(msg)
     else:
@@ -70,9 +70,9 @@ def _match_project_dir(pth, project_id=None):
         if project_dir:
             return project_dir, project_id
         raise ValueError('failed to identify any valid projects in runfolder: {}'.format(pth))
-    
+
 def _match_samplesheet(pth):
-    matches = glob.glob(os.path.join(pth, 'SampleSheet.csv'))
+    matches = glob.glob(os.path.join(pth, '*SampleSheet*.csv'))
     return matches
 
 def inspect_samplesheet(samplesheet, runfolders):
@@ -123,7 +123,7 @@ def get_project_samples_from_samplesheet(samplesheet, runfolders, project_id):
             data, opts = get_data_from_samplesheet(s)
             df_list.append(data)
     df = pd.concat(df_list)
-    df = df[df.Sample_Project == project_id]
+    df = df[df.Sample_Project.isin(project_id)]
     df['Sample_ID'] = df['Sample_ID'].astype(str)
     df = df[['Sample_ID']]
     df = df.drop_duplicates(['Sample_ID'])
@@ -136,10 +136,8 @@ def inspect_dirs(runfolders, project_id=None):
         pdir, pid = _match_project_dir(pth, project_id)
         project_dirs.append(pdir)
         project_ids.add(pid)
-    if len(project_ids) > 1:
-        raise ValueError('runfolders contain more than one GCF project ID. Use `--project-id` option to choose one.')
-    elif len(project_ids) == 1:
-        project_id = project_ids.pop()
+    if len(project_ids) == 0:
+        raise ValueError('runfolders does not contain any of the specified projects.')
     return project_dirs, project_id
 
 def match_fastq(sample_name, project_dir, rel_path=True):
@@ -165,7 +163,7 @@ def match_fastq(sample_name, project_dir, rel_path=True):
     if rel_path:
         r1_fastq_files = [os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir))) for x in r1_fastq_files]
         r2_fastq_files = [os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir))) for x in r2_fastq_files]
-    
+
     return r1_fastq_files, r2_fastq_files
 
 def find_samples(df, project_dirs):
@@ -193,7 +191,6 @@ def find_samples(df, project_dirs):
     return sample_dict
 
 def merge_samples_with_submission_form(ssub, sample_dict):
-    customer = pd.read_excel(ssub.name, sheet_name=0, skiprows=14)
     customer_column_map = {
         'Unique Sample ID': 'Sample_ID',
         'External ID (optional reference sample ID)': 'External_ID',
@@ -212,24 +209,33 @@ def merge_samples_with_submission_form(ssub, sample_dict):
         '260/280 ratio': '260/280',
         '260/230 ratio': '260/230',
         }
-    customer.rename(columns=customer_column_map, inplace=True)
-    remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
-    customer = customer.drop(remove_cols, axis=1, errors='ignore')
-
-    check_existence_of_samples(sample_dict.keys(), customer)
-    lab = pd.read_excel(ssub.name, sheet_name=2)
     lab_column_map = {
             'Concentration (ng/ul)': 'Concentration',
             '260/280 ratio': '260/280',
             '260/230 ratio': '260/230',
             'Comment': 'Lab_Comment'
         }
-    lab.rename(columns=lab_column_map, inplace=True)
-    lab = lab.drop(['Sample_Name','Project ID','KIT'], axis=1)
-    if not lab.empty:
-        merge = pd.merge(customer, lab, on='Sample_ID', how='inner')
-    else:
-        merge = customer
+    merge_l = list()
+    for pth in ssub.keys():
+        customer = pd.read_excel(ssub[pth].name, sheet_name=0, skiprows=14)
+        customer.rename(columns=customer_column_map, inplace=True)
+        remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
+        customer = customer.drop(remove_cols, axis=1, errors='ignore')
+
+        check_existence_of_samples(sample_dict.keys(), customer)
+        lab = pd.read_excel(ssub[pth].name, sheet_name=2)
+        lab.rename(columns=lab_column_map, inplace=True)
+        lab = lab.drop(['Sample_Name','Project ID','KIT'], axis=1)
+        if not lab.empty:
+            merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
+        else:
+            merge_ssub = customer
+        merge_l.append(merge_ssub)
+
+    merge = merge_l.pop(0)
+    for df in merge_l:
+        merge = merge.append(df, ignore_index=True)
+
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
     sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
@@ -258,7 +264,7 @@ def find_read_geometry(runfolders):
         for read in S['ReadInfosForLanes'][0]['ReadInfos']:
             if not read['IsIndexedRead']:
                 read_geometry.append(read['NumCycles'])
-        all.add(':'.join(map(str, read_geometry))) 
+        all.add(':'.join(map(str, read_geometry)))
     if len(all) > 1:
         raise ValueError('Read geometry mismatch between runfolders. Check Stats.json!')
     return read_geometry
@@ -272,7 +278,7 @@ def find_machine(runfolders):
     if len(matches) > 1:
         logger.warning('Multiple sequencing machines identified!')
     return '|'.join(list(matches))
-        
+
 def create_default_config(sample_dict, opts, args, project_id=None, fastq_dir=None):
     config = {}
     if project_id:
@@ -292,7 +298,7 @@ def create_default_config(sample_dict, opts, args, project_id=None, fastq_dir=No
     config['machine'] = args.machine or find_machine(args.runfolders)
     if fastq_dir:
         config['fastq_dir'] = fastq_dir
-    
+
     config['samples'] = sample_dict
 
     return config
@@ -301,7 +307,7 @@ def create_default_config(sample_dict, opts, args, project_id=None, fastq_dir=No
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-p", "--project-id" , help="Project ID", default=None, type=is_valid_gcf_id)
+    parser.add_argument("-p", "--project-id", nargs="+", help="Project ID", default=None, type=is_valid_gcf_id)
     parser.add_argument("runfolders", nargs="+", help="Path(s) to flowcell dir(s)", action=FullPaths, type=is_dir)
     parser.add_argument("-s", "--sample-sheet", dest="samplesheet", type=argparse.FileType('r'), help="IEM Samplesheet")
     parser.add_argument("-o", "--output", default="config.yaml", help="Output config file", type=argparse.FileType('w'))
@@ -310,20 +316,23 @@ if __name__ == '__main__':
     parser.add_argument("--libkit",  help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet.")
     parser.add_argument("--machine",  help="Sequencer model.")
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
-    
+
     args = parser.parse_args()
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
+    print(project_dirs)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     sample_dict = find_samples(s_df, project_dirs)
 
     if args.ssub is None:
-        if len(args.runfolders) == 1:
-            ssub_fn = os.path.join(args.runfolders[0], 'Sample-Submission-Form.xlsx')
+        ssub_d = dict()
+        for pth in args.runfolders:
+            ssub_fn = os.path.join(pth, 'Sample-Submission-Form.xlsx')
             if os.path.exists(ssub_fn):
-                args.ssub = open(ssub_fn, 'rb')
-        else:
-            raise ValueError('`--sample-submission-form` option is required with multiple runfolders.')
-    
+                ssub_d[pth] = open(ssub_fn, 'rb')
+            else:
+                raise ValueError('Runfolder {} does not contain a Sample-Submission-Form.xlsx'.format(pth))
+        args.ssub = ssub_d
+
     if args.ssub is not None:
         sample_dict = merge_samples_with_submission_form(args.ssub, sample_dict)
 
@@ -335,18 +344,20 @@ if __name__ == '__main__':
             for pid in project_dirs:
                 r1_src, r2_src = match_fastq(sample_id, pid, rel_path=False)
                 r1_dst, r2_dst = match_fastq(sample_id, pid, rel_path=True)
+                if not any([r1_src, r1_dst, r2_src, r2_dst]):
+                    continue
                 for src, dst in zip(r1_src, r1_dst):
                     if src is not None:
                         dst = os.path.join(default_fastq_dir, dst)
                         os.makedirs(os.path.dirname(dst), exist_ok=True)
                         os.symlink(src, dst)
                 for src, dst in zip(r2_src, r2_dst):
-                    if src is not None: 
+                    if src is not None:
                         dst = os.path.join(default_fastq_dir, dst)
                         os.makedirs(os.path.dirname(dst), exist_ok=True)
                         os.symlink(src, dst)
         fastq_dir = default_fastq_dir
 
-    config =  create_default_config(sample_dict, opts, args, project_id=args.project_id, fastq_dir=fastq_dir)
+    config = create_default_config(sample_dict, opts, args, project_id=args.project_id, fastq_dir=fastq_dir)
 
     yaml.dump(config, args.output, default_flow_style=False, sort_keys=False)
