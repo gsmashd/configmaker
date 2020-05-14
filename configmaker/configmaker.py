@@ -43,6 +43,8 @@ REPO_MAP = {
     'microbiome': 'https://github.com/gcfntnu/microbiome.git',
 }
 
+GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
+
 class FullPaths(argparse.Action):
     """Expand user- and relative-paths"""
     def __call__(self, parser, namespace, values, option_string=None):
@@ -396,6 +398,10 @@ if __name__ == '__main__':
             if not os.path.exists("src/{}".format(pipeline)):
                 os.makedirs('src', exist_ok=True)
                 cmd = 'cd src && git clone {}'.format(REPO_MAP.get(pipeline, None))
+                subprocess.check_call(cmd, shell=True)
+
+            if not (os.path.exists("src/gcfdb") or os.environ.get("GCF_DB")):
+                cmd = 'cd src && git clone {}'.format(GCFDB_SRC)
                 subprocess.check_call(cmd, shell=True)
 
             cmd = 'wget -O Snakefile https://gcf-winecellar.medisin.ntnu.no/snakefiles/Snakefile-{}'.format(pipeline)
