@@ -10,6 +10,7 @@ import yaml
 import logging
 import json
 import warnings
+import subprocess
 
 logger = logging.getLogger('GCF-configmaker')
 logger.setLevel(logging.WARNING)
@@ -25,6 +26,22 @@ SEQUENCERS = {
     'M05617' : 'MiSeq SINTEF'
 }
 
+PIPELINE_MAP = {
+    'Lexogen SENSE Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion Kit V1.2)': 'rna-seq',
+    'Lexogen SENSE mRNA-Seq Library Prep Kit V2': 'rna-seq',
+    'Illumina TruSeq Stranded Total RNA Library Prep (Human/Mouse/Rat)': 'rna-seq',
+    'Illumina TruSeq Stranded Total RNA Library Prep (Globin)': 'rna-seq',
+    'Illumina TruSeq Stranded mRNA Library Prep': 'rna-seq',
+    'QIAseq 16S ITS Region Panels': 'microbiome',
+    '16S Metagenomic Sequencing Library Prep': 'microbiome',
+    '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell'
+}
+
+REPO_MAP = {
+    'rna-seq': 'https://github.com/gcfntnu/rna-seq.git',
+    'single-cell': 'https://github.com/gcfntnu/single-cell.git',
+    'microbiome': 'https://github.com/gcfntnu/microbiome.git',
+}
 
 class FullPaths(argparse.Action):
     """Expand user- and relative-paths"""
@@ -139,7 +156,7 @@ def inspect_dirs(runfolders, project_id=None):
         project_ids.add(pid)
     if len(project_ids) == 0:
         raise ValueError('runfolders does not contain any of the specified projects.')
-    return project_dirs, project_id
+    return project_dirs, list(project_ids)
 
 def match_fastq(sample_name, project_dir, rel_path=True):
     """Return fastq files matching a sample name.
@@ -326,6 +343,7 @@ if __name__ == '__main__':
     parser.add_argument("--libkit",  help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet.")
     parser.add_argument("--machine",  help="Sequencer model.")
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
+    parser.add_argument("--create-project", action='store_true', help="Pull analysis pipeline and snakemake file based on libkit")
 
     args = parser.parse_args()
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
@@ -367,6 +385,21 @@ if __name__ == '__main__':
                         os.symlink(src, dst)
         fastq_dir = default_fastq_dir
 
+
     config = create_default_config(sample_dict, opts, args, fastq_dir=fastq_dir)
 
     yaml.dump(config, args.output, default_flow_style=False, sort_keys=False)
+
+    if args.create_project:
+        pipeline = PIPELINE_MAP.get(config.get('libprepkit', None), None)
+        if pipeline:
+            if not os.path.exists("src/{}".format(pipeline)):
+                os.makedirs('src', exist_ok=True)
+                cmd = 'cd src && git clone {}'.format(REPO_MAP.get(pipeline, None))
+                subprocess.check_call(cmd, shell=True)
+
+            cmd = 'wget -O Snakefile https://gcf-winecellar.medisin.ntnu.no/snakefiles/Snakefile-{}'.format(pipeline)
+            subprocess.check_call(cmd, shell=True)
+        else:
+            raise ValueError('Libprepkit {} is not associated with any Snakemake pipelines'.format(config.get('libprepkit')))
+
