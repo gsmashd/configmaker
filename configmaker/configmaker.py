@@ -210,7 +210,29 @@ def find_samples(df, project_dirs):
             }
     return sample_dict
 
-def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None):
+
+def find_samples_batch(df, project_dirs):
+    sample_dict = {}
+    for index, row in df.iterrows():
+        for p_pth in project_dirs:
+            r1, r2 = match_fastq(row.Sample_ID, p_pth)
+            if (not r1) and (not r2):
+                warn_str = 'sample {} not found in {}'.format(row.Sample_ID, p_pth)
+                warnings.warn(warn_str)
+            else:
+                pe = 0 if not r2 else 1
+                r2 = [] if not r2 else r2
+                sample_dict[str(row.Sample_ID) + "_" + p_pth.split("/")[-2].split("_")[-1]] = {
+                    'R1': ','.join(r1),
+                    'R2': ','.join(r2),
+                    'paired_end': pe,
+                    'Sample_ID': str(row.Sample_ID) + "_" + p_pth.split("/")[-2].split("_")[-1],
+                    'Src_Sample_ID': row.Sample_ID,
+                }
+    return sample_dict
+
+
+def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, keep_batch=None):
     customer_column_map = {
         'Unique Sample ID': 'Sample_ID',
         'External ID (optional reference sample ID)': 'External_ID',
@@ -245,6 +267,11 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None):
         lab = pd.read_excel(ssub[pth].name, sheet_name=2)
         lab.rename(columns=lab_column_map, inplace=True)
         lab = lab.drop(['Sample_Name','Project ID','KIT'], axis=1)
+        if keep_batch:
+            customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + os.path.basename(pth).split("_")[-1]
+            customer['Flowcell_Name'] = [os.path.basename(pth)]*len(customer)
+            customer['Flowcell_ID'] = [os.path.basename(pth).split("_")[-1]]*len(customer)
+            lab['Sample_ID'] = lab['Sample_ID'].astype(str) + "_" + os.path.basename(pth).split("_")[-1]
         if not lab.empty:
             merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
         else:
@@ -324,6 +351,15 @@ def create_default_config(sample_dict, opts, args, fastq_dir=None):
 
     config['read_geometry'] = find_read_geometry(args.runfolders)
     config['machine'] = args.machine or find_machine(args.runfolders)
+
+    batch = {}
+    if args.keep_batch:
+        batch['name'] = 'Flowcell_ID'
+    else:
+        batch['method'] = 'skip'
+    quant = {'batch': batch}
+    config['quant'] = quant
+
     if fastq_dir:
         config['fastq_dir'] = fastq_dir
 
@@ -346,11 +382,15 @@ if __name__ == '__main__':
     parser.add_argument("--machine",  help="Sequencer model.")
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     parser.add_argument("--create-project", action='store_true', help="Pull analysis pipeline and snakemake file based on libkit")
+    parser.add_argument("--keep-batch", action='store_true', help="Sample names will be made unique for each batch.")
 
     args = parser.parse_args()
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
-    sample_dict = find_samples(s_df, project_dirs)
+    if args.keep_batch:
+        sample_dict = find_samples_batch(s_df, project_dirs)
+    else:
+        sample_dict = find_samples(s_df, project_dirs)
 
     if args.ssub is None:
         ssub_d = dict()
@@ -363,13 +403,21 @@ if __name__ == '__main__':
         args.ssub = ssub_d
 
     if args.ssub is not None:
-        sample_dict = merge_samples_with_submission_form(args.ssub, sample_dict, new_project_id=args.new_project_id)
+        sample_dict = merge_samples_with_submission_form(
+            args.ssub,
+            sample_dict,
+            new_project_id=args.new_project_id,
+            keep_batch=args.keep_batch
+            )
 
     fastq_dir = None
     if args.create_fastq_dir:
         default_fastq_dir = 'data/raw/fastq'
         os.makedirs(default_fastq_dir, exist_ok=True)
-        for sample_id in sample_dict.keys():
+        s_ids = sample_dict.keys()
+        if args.keep_batch:
+            s_ids = set([s.split("_")[0] for s in s_ids])
+        for sample_id in s_ids:
             for pid in project_dirs:
                 r1_src, r2_src = match_fastq(sample_id, pid, rel_path=False)
                 r1_dst, r2_dst = match_fastq(sample_id, pid, rel_path=True)
