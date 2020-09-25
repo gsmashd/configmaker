@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/opt/conda/bin/python3.7
 
 import sys
 import os
@@ -267,7 +267,10 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
 
         lab = pd.read_excel(ssub[pth].name, sheet_name=2)
         lab.rename(columns=lab_column_map, inplace=True)
-        lab = lab.drop(['Sample_Name','Project ID','KIT'], axis=1)
+        for col in ['Sample_Name','Project ID','KIT']:
+            if col in lab.columns:
+                lab = lab.drop([col], axis=1)
+
         if keep_batch:
             customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + os.path.basename(pth).split("_")[-1]
             customer['Flowcell_Name'] = [os.path.basename(pth)]*len(customer)
