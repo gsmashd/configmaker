@@ -35,13 +35,15 @@ PIPELINE_MAP = {
     'QIAseq 16S ITS Region Panels': 'microbiome',
     '16S Metagenomic Sequencing Library Prep': 'microbiome',
     'ITS Low Input GCF Custom': 'microbiome',
-    '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell'
+    '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell',
+    'Bioo Scientific NEXTflex Small RNA-Seq Kit v3': 'small-rna'
 }
 
 REPO_MAP = {
     'rna-seq': 'https://github.com/gcfntnu/rna-seq.git',
     'single-cell': 'https://github.com/gcfntnu/single-cell.git',
     'microbiome': 'https://github.com/gcfntnu/microbiome.git',
+    'small-rna': 'https://github.com/gcfntnu/small-rna.git'
 }
 
 GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
@@ -386,6 +388,7 @@ if __name__ == '__main__':
     parser.add_argument("--keep-batch", action='store_true', help="Sample names will be made unique for each batch.")
 
     args = parser.parse_args()
+        
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     if args.keep_batch:
@@ -404,16 +407,14 @@ if __name__ == '__main__':
         args.ssub = ssub_d
 
     if args.ssub is not None:
-        sample_dict = merge_samples_with_submission_form(
-            args.ssub,
-            sample_dict,
-            new_project_id=args.new_project_id,
-            keep_batch=args.keep_batch
-            )
+        sample_dict = merge_samples_with_submission_form(args.ssub,
+                                                         sample_dict,
+                                                         new_project_id=args.new_project_id,
+                                                         keep_batch=args.keep_batch)
 
     fastq_dir = None
     if args.create_fastq_dir:
-        default_fastq_dir = 'data/raw/fastq'
+        default_fastq_dir = os.path.join('data', 'raw', 'fastq')
         os.makedirs(default_fastq_dir, exist_ok=True)
         s_ids = sample_dict.keys()
         if args.keep_batch:
