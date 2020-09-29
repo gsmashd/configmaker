@@ -399,21 +399,23 @@ if __name__ == '__main__':
     else:
         sample_dict = find_samples(s_df, project_dirs)
 
+    ssub_d = dict()
     if args.ssub is None:
-        ssub_d = dict()
         for pth in args.runfolders:
             ssub_fn = os.path.join(pth, 'Sample-Submission-Form.xlsx')
             if os.path.exists(ssub_fn):
                 ssub_d[pth] = open(ssub_fn, 'rb')
             else:
                 raise ValueError('Runfolder {} does not contain a Sample-Submission-Form.xlsx'.format(pth))
-        args.ssub = ssub_d
+    else:
+        ssub_d[os.path.abspath(args.ssub.name)] = args.ssub 
+    args.ssub = ssub_d
 
-    if args.ssub is not None:
-        sample_dict = merge_samples_with_submission_form(args.ssub,
-                                                         sample_dict,
-                                                         new_project_id=args.new_project_id,
-                                                         keep_batch=args.keep_batch)
+    
+    sample_dict = merge_samples_with_submission_form(args.ssub,
+                                                     sample_dict,
+                                                     new_project_id=args.new_project_id,
+                                                     keep_batch=args.keep_batch)
 
     fastq_dir = None
     if args.create_fastq_dir:
