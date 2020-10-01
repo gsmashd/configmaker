@@ -448,6 +448,28 @@ if __name__ == '__main__':
 
     yaml.dump(config, args.output, default_flow_style=False, sort_keys=False)
 
+    summary = dict()
+    for s, info in config['samples'].items():
+        summary[s] = set(x.split("/")[0] for x in info['R1'].split(","))
+
+    count = dict()
+    for s,f in summary.items():
+        if len(f) in count.keys():
+            count[len(f)] += 1
+        else:
+            count[len(f)] = 1
+    dirname = os.path.dirname(str(args.output))
+    with open(os.path.join(dirname, ".configmaker.log"),"w") as conflog:
+        for nf, ns in count.items():
+            line = "{} sample{} found in {} flowcell{}".format(ns, "s" if ns > 1 else "", nf, "s" if nf > 1 else "")
+            print(line)
+            conflog.write(line + "\n")
+        conflog.write("Sample summary:\n")
+        for s, f in summary.items():
+            conflog.write("Sample {} found in: {}\n".format(s, ', '.join(f)))
+    print("Sample summary log written to {}".format(os.path.join(dirname, ".configmaker.log")))
+
+
     if args.create_project:
         pipeline = PIPELINE_MAP.get(config.get('libprepkit', None), None)
         if pipeline:
