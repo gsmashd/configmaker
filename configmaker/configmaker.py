@@ -1,4 +1,4 @@
-#!/opt/conda/bin/python3.7
+#!/home/geiramh/miniconda3/bin/python3.7
 
 import sys
 import os
@@ -35,13 +35,15 @@ PIPELINE_MAP = {
     'QIAseq 16S ITS Region Panels': 'microbiome',
     '16S Metagenomic Sequencing Library Prep': 'microbiome',
     'ITS Low Input GCF Custom': 'microbiome',
-    '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell'
+    '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell',
+    'Bioo Scientific NEXTflex Small RNA-Seq Kit v3': 'small-rna'
 }
 
 REPO_MAP = {
     'rna-seq': 'https://github.com/gcfntnu/rna-seq.git',
     'single-cell': 'https://github.com/gcfntnu/single-cell.git',
     'microbiome': 'https://github.com/gcfntnu/microbiome.git',
+    'small-rna': 'https://github.com/gcfntnu/small-rna.git'
 }
 
 GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
@@ -280,11 +282,13 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
             merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
         else:
             merge_ssub = customer
-        merge_l.append(merge_ssub)
+        merge_ssub_d = merge_ssub.to_dict(orient='index')
+        merge_l.append(merge_ssub_d)
 
     merge = merge_l.pop(0)
-    for df in merge_l:
-        merge = merge.append(df, ignore_index=True)
+    for s_d in merge_l:
+        merge.update(s_d)
+    merge = pd.DataFrame.from_dict(merge, orient='index')
 
     check_existence_of_samples(sample_dict.keys(), merge)
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
@@ -296,7 +300,6 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
     if new_project_id:
         sample_df.rename(columns={'Project_ID': 'Src_Project_ID'}, inplace=True)
         sample_df.insert(loc=0, column="Project_ID", value=[new_project_id]*len(sample_df))
-
     s_dict = sample_df.to_dict(orient='index')
     return s_dict
 
@@ -389,6 +392,7 @@ if __name__ == '__main__':
     parser.add_argument("--keep-batch", action='store_true', help="Sample names will be made unique for each batch.")
 
     args = parser.parse_args()
+        
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     if args.keep_batch:
@@ -396,27 +400,27 @@ if __name__ == '__main__':
     else:
         sample_dict = find_samples(s_df, project_dirs)
 
+    ssub_d = dict()
     if args.ssub is None:
-        ssub_d = dict()
         for pth in args.runfolders:
             ssub_fn = os.path.join(pth, 'Sample-Submission-Form.xlsx')
             if os.path.exists(ssub_fn):
                 ssub_d[pth] = open(ssub_fn, 'rb')
             else:
                 raise ValueError('Runfolder {} does not contain a Sample-Submission-Form.xlsx'.format(pth))
-        args.ssub = ssub_d
+    else:
+        ssub_d[os.path.abspath(args.ssub.name)] = args.ssub 
+    args.ssub = ssub_d
 
-    if args.ssub is not None:
-        sample_dict = merge_samples_with_submission_form(
-            args.ssub,
-            sample_dict,
-            new_project_id=args.new_project_id,
-            keep_batch=args.keep_batch
-            )
+    
+    sample_dict = merge_samples_with_submission_form(args.ssub,
+                                                     sample_dict,
+                                                     new_project_id=args.new_project_id,
+                                                     keep_batch=args.keep_batch)
 
     fastq_dir = None
     if args.create_fastq_dir:
-        default_fastq_dir = 'data/raw/fastq'
+        default_fastq_dir = os.path.join('data', 'raw', 'fastq')
         os.makedirs(default_fastq_dir, exist_ok=True)
         s_ids = sample_dict.keys()
         if args.keep_batch:
