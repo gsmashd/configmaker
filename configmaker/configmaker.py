@@ -297,7 +297,7 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
 
     check_existence_of_samples(sample_dict.keys(), merge)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
-    sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
+    sample_df = sample_df.merge(merge,on='Sample_ID',how='left')
     sample_df.reset_index()
     sample_df.index = sample_df['Sample_ID']
     sample_df.fillna('',inplace=True)
@@ -310,10 +310,10 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
 def check_existence_of_samples(samples, df):
     diff = set(samples) - set(df['Sample_ID'].astype(str))
     if diff:
-        logger.warning("WARNING: Samples {} are contained in SampleSheet, but not in sample submission form!".format(', '.join(list(diff))))
+        logger.warning("WARNING: Samples {} are contained in SampleSheet, but not in sample submission form. Sample info from these samples will have empty values.".format(', '.join(list(diff))))
     diff = set(df['Sample_ID'].astype(str)) - set(samples)
     if diff:
-        logger.warning("WARNING: Samples {} are contained in sample submission form, but not in SampleSheet!".format(', '.join(list(diff))))
+        logger.warning("WARNING: Samples {} are contained in sample submission form, but not in SampleSheet. Sample info from these samples are omitted.".format(', '.join(list(diff))))
     return None
 
 def find_read_geometry(runfolders):
