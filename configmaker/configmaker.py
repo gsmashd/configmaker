@@ -178,8 +178,8 @@ def match_fastq(sample_name, project_dir, rel_path=True):
             r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R1_001.fastq.gz')))
             r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + '*_R2_001.fastq.gz')))
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
-        #warn_msg = 'Failed to match sample: {} with any fastq files in {}'.format(sample_name, project_dir)
-        #warnings.warn(warn_msg)
+        warn_msg = 'Failed to match sample: {} with any fastq files in {}'.format(sample_name, project_dir)
+        warnings.warn(warn_msg)
         return None, None
     r1_fastq_files = sorted(r1_fastq_files)
     r2_fastq_files = sorted(r2_fastq_files)
@@ -260,7 +260,7 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
             '260/230 ratio': '260/230',
             'Comment': 'Lab_Comment'
         }
-    merge_l = list()
+    merge_d = dict()
     for pth in ssub.keys():
         customer = pd.read_excel(ssub[pth].name, sheet_name=0, skiprows=14)
         customer.rename(columns=customer_column_map, inplace=True)
@@ -282,16 +282,20 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
             merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
         else:
             merge_ssub = customer
+        merge_ssub["Sample_ID"] = merge_ssub["Sample_ID"].astype(str)
+        merge_ssub.index = merge_ssub["Sample_ID"]
         merge_ssub_d = merge_ssub.to_dict(orient='index')
-        merge_l.append(merge_ssub_d)
+        merge_d[pth] = merge_ssub_d
 
-    merge = merge_l.pop(0)
-    for s_d in merge_l:
+    merge = dict()
+    for pth, s_d in merge_d.items():
+        intersection = set(merge.keys()).intersection(set(s_d.keys()))
+        if len(intersection) > 0:
+            logger.warning("WARNING: Sampleinfo on {} are updated with values from {}/Sample-Submission-Form.xlsx. Specify a custom sample submission form with --sample-submission-form to force values.".format(', '.join(list(intersection)), pth))
         merge.update(s_d)
     merge = pd.DataFrame.from_dict(merge, orient='index')
 
     check_existence_of_samples(sample_dict.keys(), merge)
-    merge['Sample_ID'] = merge['Sample_ID'].astype(str)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
     sample_df = sample_df.merge(merge,on='Sample_ID',how='inner')
     sample_df.reset_index()
@@ -392,7 +396,7 @@ if __name__ == '__main__':
     parser.add_argument("--keep-batch", action='store_true', help="Sample names will be made unique for each batch.")
 
     args = parser.parse_args()
-        
+
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
     s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     if args.keep_batch:
@@ -409,10 +413,10 @@ if __name__ == '__main__':
             else:
                 raise ValueError('Runfolder {} does not contain a Sample-Submission-Form.xlsx'.format(pth))
     else:
-        ssub_d[os.path.abspath(args.ssub.name)] = args.ssub 
+        ssub_d[os.path.abspath(args.ssub.name)] = args.ssub
     args.ssub = ssub_d
 
-    
+
     sample_dict = merge_samples_with_submission_form(args.ssub,
                                                      sample_dict,
                                                      new_project_id=args.new_project_id,
@@ -460,6 +464,7 @@ if __name__ == '__main__':
             count[len(f)] = 1
     dirname = os.path.dirname(str(args.output))
     with open(os.path.join(dirname, ".configmaker.log"),"w") as conflog:
+        print("Summary:")
         for nf, ns in count.items():
             line = "{} sample{} found in {} flowcell{}".format(ns, "s" if ns > 1 else "", nf, "s" if nf > 1 else "")
             print(line)
@@ -467,7 +472,7 @@ if __name__ == '__main__':
         conflog.write("Sample summary:\n")
         for s, f in summary.items():
             conflog.write("Sample {} found in: {}\n".format(s, ', '.join(f)))
-    print("Sample summary log written to {}".format(os.path.join(dirname, ".configmaker.log")))
+    print("Full sample summary log written to {}".format(os.path.join(dirname, ".configmaker.log")))
 
 
     if args.create_project:
