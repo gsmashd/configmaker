@@ -1,4 +1,4 @@
-#!/opt/conda/bin/python3.7
+#!/home/geiramh/miniconda3/bin/python3.7
 
 import sys
 import os
@@ -282,11 +282,13 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
             merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
         else:
             merge_ssub = customer
-        merge_l.append(merge_ssub)
+        merge_ssub_d = merge_ssub.to_dict(orient='index')
+        merge_l.append(merge_ssub_d)
 
     merge = merge_l.pop(0)
-    for df in merge_l:
-        merge = merge.append(df, ignore_index=True)
+    for s_d in merge_l:
+        merge.update(s_d)
+    merge = pd.DataFrame.from_dict(merge, orient='index')
 
     check_existence_of_samples(sample_dict.keys(), merge)
     merge['Sample_ID'] = merge['Sample_ID'].astype(str)
@@ -298,7 +300,6 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
     if new_project_id:
         sample_df.rename(columns={'Project_ID': 'Src_Project_ID'}, inplace=True)
         sample_df.insert(loc=0, column="Project_ID", value=[new_project_id]*len(sample_df))
-
     s_dict = sample_df.to_dict(orient='index')
     return s_dict
 
