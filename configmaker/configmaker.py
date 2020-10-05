@@ -234,8 +234,7 @@ def find_samples_batch(df, project_dirs):
                 }
     return sample_dict
 
-
-def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, keep_batch=None):
+def sample_submission_form_parser(ssub_path, keep_batch=None):
     customer_column_map = {
         'Unique Sample ID': 'Sample_ID',
         'External ID (optional reference sample ID)': 'External_ID',
@@ -260,31 +259,34 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
             '260/230 ratio': '260/230',
             'Comment': 'Lab_Comment'
         }
+
+    customer = pd.read_excel(ssub_path, sheet_name=0, skiprows=14)
+    customer.rename(columns=customer_column_map, inplace=True, errors='ignore')
+    remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
+    customer = customer.drop(remove_cols, axis=1, errors='ignore')
+
+    lab = pd.read_excel(ssub_path, sheet_name=2)
+    lab.rename(columns=lab_column_map, inplace=True, errors='ignore')
+    lab.drop(['Sample_Name','Project ID','KIT'], inplace=True, errors='ignore')
+
+    if keep_batch:
+        customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + os.path.dirname(ssub_path).split("_")[-1]
+        customer['Flowcell_Name'] = [os.path.basename(pth)]*len(customer)
+        customer['Flowcell_ID'] = [os.path.basename(pth).split("_")[-1]]*len(customer)
+        lab['Sample_ID'] = lab['Sample_ID'].astype(str) + "_" + os.path.dirname(ssub_path).split("_")[-1]
+    if not lab.empty:
+        merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
+    else:
+        merge_ssub = customer
+    merge_ssub["Sample_ID"] = merge_ssub["Sample_ID"].astype(str)
+    merge_ssub.index = merge_ssub["Sample_ID"]
+    merge_ssub_d = merge_ssub.to_dict(orient='index')
+    return merge_ssub_d
+
+def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, keep_batch=None):
     merge_d = dict()
     for pth in ssub.keys():
-        customer = pd.read_excel(ssub[pth].name, sheet_name=0, skiprows=14)
-        customer.rename(columns=customer_column_map, inplace=True)
-        remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
-        customer = customer.drop(remove_cols, axis=1, errors='ignore')
-
-        lab = pd.read_excel(ssub[pth].name, sheet_name=2)
-        lab.rename(columns=lab_column_map, inplace=True)
-        for col in ['Sample_Name','Project ID','KIT']:
-            if col in lab.columns:
-                lab = lab.drop([col], axis=1)
-
-        if keep_batch:
-            customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + os.path.basename(pth).split("_")[-1]
-            customer['Flowcell_Name'] = [os.path.basename(pth)]*len(customer)
-            customer['Flowcell_ID'] = [os.path.basename(pth).split("_")[-1]]*len(customer)
-            lab['Sample_ID'] = lab['Sample_ID'].astype(str) + "_" + os.path.basename(pth).split("_")[-1]
-        if not lab.empty:
-            merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
-        else:
-            merge_ssub = customer
-        merge_ssub["Sample_ID"] = merge_ssub["Sample_ID"].astype(str)
-        merge_ssub.index = merge_ssub["Sample_ID"]
-        merge_ssub_d = merge_ssub.to_dict(orient='index')
+        merge_ssub_d = sample_submission_form_parser(ssub[pth].name, keep_batch=keep_batch)
         merge_d[pth] = merge_ssub_d
 
     merge = dict()
@@ -294,7 +296,6 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
             logger.warning("WARNING: Sampleinfo on {} are updated with values from {}/Sample-Submission-Form.xlsx. Specify a custom sample submission form with --sample-submission-form to force values.".format(', '.join(list(intersection)), pth))
         merge.update(s_d)
     merge = pd.DataFrame.from_dict(merge, orient='index')
-
     check_existence_of_samples(sample_dict.keys(), merge)
     sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
     sample_df = sample_df.merge(merge,on='Sample_ID',how='left')
