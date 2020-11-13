@@ -9,15 +9,15 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name = "configmaker",
-    version = "1",
+    name = "gcf-tools",
+    version = "0.1",
     author = "GCF, NTNU, Trondheim - Arnar Flatberg, Geir Amund Svan Hasle",
     author_email = "arnar.flatberg@ntnu.no",
     description = ("In-house tool to create configs used in bio informatics pipelines at GCF, NTNU, Trondheim."),
     license = "BSD",
     url = "https://github.com/gcf-trh/configmaker",
-    scripts = ['configmaker/configmaker.py'],
-    packages=['configmaker'],
+    scripts = ['configmaker/configmaker.py', 'testdata/create_testdata.py'],
+    packages=['configmaker', 'testdata'],
     install_requiress=['glob', 're', 'pandas', 'argparse', 'logging','xlrd>=1.0.0'],
     setup_requiress=['glob', 're', 'pandas', 'argparse', 'logging','xlrd>=1.0.0'],
 )
