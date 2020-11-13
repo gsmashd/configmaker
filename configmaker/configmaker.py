@@ -1,4 +1,4 @@
-#!/home/geiramh/miniconda3/bin/python3.7
+#!/usr/bin/env python
 
 import sys
 import os
