@@ -110,8 +110,8 @@ class BFQoutput():
         df = pd.read_csv(os.path.join(self.dirname, '{}_samplesheet.tsv'.format(self._gcf_number)), sep='\t')
         self.fastq_files = {}
         for sample in df.Sample_ID:
-            self.fastq_files[sample] = glob.glob1(self._fastq_dir, '{}*.fastq.gz'.format(sample))
-                
+            self.fastq_files[sample] = glob.glob1(os.path.join(self._fastq_dir, sample), '{}*.fastq.gz'.format(sample))
+        
     def sample(self, output_dir, overwrite=True, n_reads=10000, n_samples=3, samples=None):
         """Main subsampling routine.
         This method subsamples and writes output files.
@@ -198,18 +198,6 @@ def create_argparser():
     
     return parser
 
-def subset_fastq(fastq_files, output_dir, n=1000, seed=123456):
-    """Sample random reads from fastq files using seqkit.
-
-    Note: SeqKit - Ultrafast FASTA/Q kit needs to be installed.
-    """
-    for fq_name in fastq_files:
-        basename = os.path.basename(fq_name)
-        output_fn = os.path.join(output_dir, basename)
-        cmd = 'zcat {} | seqkit sample -n {} -s {} > {}'.format(fq_name, n, seed, output_fn)
-        os.system(cmd)
-        logging.info('sampling fastq using seqkit ...')
-        logging.info(cmd)
 
 if __name__ == "__main__":
     parser = create_argparser()
