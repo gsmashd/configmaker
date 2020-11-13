@@ -37,6 +37,7 @@ def sample_samplesheet(input_fn, output_fn, samples, valid_samples):
     
     """
     output = []
+    remove_samples = set(valid_samples).difference(samples)
     with open(input_fn) as fh:
         for i, line in enumerate(fh):
             if line.startswith('[Data]'):
@@ -47,7 +48,7 @@ def sample_samplesheet(input_fn, output_fn, samples, valid_samples):
         lines = fh.read().splitlines()
         for i, line in enumerate(lines):
             els = line.split(',')
-            if i > header_line and els[sample_id_index] in valid_samples:
+            if i > header_line and els[sample_id_index] in remove_samples:
                 pass
             else:
                output.append(line)
