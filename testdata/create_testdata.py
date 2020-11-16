@@ -110,7 +110,7 @@ class BFQoutput():
         df = pd.read_csv(os.path.join(self.dirname, '{}_samplesheet.tsv'.format(self._gcf_number)), sep='\t')
         self.fastq_files = {}
         for sample in df.Sample_ID:
-            search_path = os.path.join(self._fastq_dir, sample) if PIPELINE_MAP.get(self.libprep, None) == "single-cell" else self._fastq_dir
+            search_path = os.path.join(self._fastq_dir, sample) if self.pipeline == "single-cell" else self._fastq_dir
             self.fastq_files[sample] = glob.glob1(search_path, '{}*.fastq.gz'.format(sample))
         
     def sample(self, output_dir, overwrite=True, n_reads=10000, n_samples=3, samples=None):
