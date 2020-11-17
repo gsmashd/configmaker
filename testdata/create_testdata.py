@@ -170,7 +170,7 @@ class BFQoutput():
                 if self.pipeline == 'single-cell':
                     new_baseneame = fq_basename
                 else:
-                    read_num = 'R1' if fq_basename.endswith('_R1.fastq') else 'R2'
+                    read_num = 'R1' if fq_basename.endswith('_R1.fastq.gz') else 'R2'
                     new_basename = '{}_S1_{}_001.fastq'.format(sample, read_num)
                     dst = os.path.join(fastq_dir_output, new_basename)
                     cmd = 'zcat {} | seqkit sample -n {} -s 123456 > {}'.format(src, n_reads, dst)
