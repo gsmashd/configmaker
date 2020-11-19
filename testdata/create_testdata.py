@@ -110,9 +110,9 @@ class BFQoutput():
         df = pd.read_csv(os.path.join(self.dirname, '{}_samplesheet.tsv'.format(self._gcf_number)), sep='\t')
         self.fastq_files = {}
         for sample in df.Sample_ID:
-            search_path = os.path.join(self._fastq_dir, sample) if self.pipeline == "single-cell" else self._fastq_dir
-            self.fastq_files[sample] = glob.glob1(search_path, '{}*.fastq.gz'.format(sample))
-        
+            samples = [s.split(self._fastq_dir + "/")[-1] for s in glob.glob(os.path.join(self._fastq_dir, "**", "{}*.fastq.gz".format(sample)), recursive=True)]
+            self.fastq_files[sample] = samples
+
     def sample(self, output_dir, overwrite=True, n_reads=10000, n_samples=3, samples=None):
         """Main subsampling routine.
         This method subsamples and writes output files.
@@ -168,16 +168,20 @@ class BFQoutput():
             for fq_basename in fq_files:
                 src = os.path.join(self._fastq_dir, fq_basename)
                 if self.pipeline == 'single-cell':
-                    new_baseneame = fq_basename
+                    dst = os.path.join(fastq_dir_output, fq_basename).replace(".fastq.gz",".fastq")
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
                 else:
                     read_num = 'R1' if fq_basename.endswith('_R1.fastq.gz') else 'R2'
                     new_basename = '{}_S1_{}_001.fastq'.format(sample, read_num)
                     dst = os.path.join(fastq_dir_output, new_basename)
-                    cmd = 'zcat {} | seqkit sample -n {} -s 123456 > {}'.format(src, n_reads, dst)
-                    logging.info(cmd)
-                    subprocess.call(cmd, shell=True)
-        # gzip fastq files         
-        cmd = 'gzip {}/*'.format(fastq_dir_output)
+                cmd = 'zcat {} | seqkit sample -n {} -s 123456 > {}'.format(src, n_reads, dst)
+                logging.info(cmd)
+                subprocess.call(cmd, shell=True)
+        # gzip fastq files        
+        if self.pipeline == 'single-cell':
+            cmd = 'gzip {}/*/*'.format(fastq_dir_output)
+        else:
+            cmd = 'gzip {}/*'.format(fastq_dir_output)
         logging.info('compressing fastq files ....')
         logging.info(cmd)
         subprocess.call(cmd, shell=True)
