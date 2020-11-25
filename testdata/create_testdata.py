@@ -152,6 +152,8 @@ class BFQoutput():
 
         # susbet and copy fastq files
         fastq_dir_output = os.path.join(output_dir, os.path.basename(self._fastq_dir))
+        if self.pipeline == 'microbiome':
+            fastq_dir_output = fastq_dir_output.replace("raw_fastq_","")
         os.makedirs(fastq_dir_output, exist_ok=True)
         if samples is None:
             SAMPLES = list(self.fastq_files.keys())
