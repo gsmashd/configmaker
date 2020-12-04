@@ -113,7 +113,7 @@ class BFQoutput():
             samples = [s.split(self._fastq_dir + "/")[-1] for s in glob.glob(os.path.join(self._fastq_dir, "**", "{}*.fastq.gz".format(sample)), recursive=True)]
             self.fastq_files[sample] = samples
 
-    def sample(self, output_dir, overwrite=True, n_reads=10000, n_samples=3, samples=None):
+    def sample(self, output_dir, overwrite=True, n_reads=10000, n_samples=3, samples=None, no_fastq_rename=False):
         """Main subsampling routine.
         This method subsamples and writes output files.
 
@@ -128,6 +128,8 @@ class BFQoutput():
             Number of random subsampled samples. This will be ignored if `samples` is not None
         samples : list
             List of sample-ids to use in sampling
+        no_fastq_rename: boolean
+            Keep original fastq naming scheme
         """
         logging.info("start copy of files from bfq output to : {}".format(output_dir))
         if os.path.exists(output_dir):
@@ -169,7 +171,7 @@ class BFQoutput():
             fq_files = self.fastq_files[sample]
             for fq_basename in fq_files:
                 src = os.path.join(self._fastq_dir, fq_basename)
-                if self.pipeline == 'single-cell':
+                if self.pipeline == 'single-cell' or no_fastq_rename:
                     dst = os.path.join(fastq_dir_output, fq_basename).replace(".fastq.gz",".fastq")
                     os.makedirs(os.path.dirname(dst), exist_ok=True)
                 else:
@@ -196,11 +198,12 @@ class BFQoutput():
 
 def create_argparser():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("runfolder", help="Path to flowcell dir")
-    parser.add_argument("--output", help="Output dir")
-    parser.add_argument("--n-reads", default=1000, type=int, help="Number of reads. (random subset)")
-    parser.add_argument("--n-samples", default=3, type=int, help="Number of samples (random subset)")
-    parser.add_argument("--samples", help="Comma separated list of sample ids to subset. This will overrride `--n-samples`")
+    parser.add_argument("runfolder", help="path to flowcell dir")
+    parser.add_argument("--output", help="output dir")
+    parser.add_argument("--n-reads", default=1000, type=int, help="number of reads. (random subset)")
+    parser.add_argument("--n-samples", default=3, type=int, help="number of samples (random subset)")
+    parser.add_argument("--samples", help="comma separated list of sample ids to subset. This will overrride `--n-samples`")
+    parser.add_argument("--no-fastq-rename", action='store_true', help="keep bfq fastq renaming scheme")
     parser.add_argument("--verbose", action='store_true')
     
     return parser
@@ -214,6 +217,6 @@ if __name__ == "__main__":
         logging.basicConfig(level='INFO', format='[%(levelname)s] %(message)s')
 
     bfq =  BFQoutput(args.runfolder)
-    bfq.sample(args.output, n_reads=args.n_reads, n_samples=args.n_samples, samples=args.samples)
+    bfq.sample(args.output, n_reads=args.n_reads, n_samples=args.n_samples, samples=args.samples, no_fastq_rename=args.no_fastq_rename)
 
     
