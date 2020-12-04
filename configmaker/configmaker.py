@@ -48,6 +48,19 @@ REPO_MAP = {
 
 GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
 
+SNAKEFILE_TEMPLATE = """
+fromm snakemake.utils import validate, min_version
+
+configfile:
+    'config.yaml'
+
+include:
+    'src/{pipeline}/{pipeline}.sm'
+include:
+    'src/{pipeline}/rules/bfq.rules'
+
+"""
+
 class FullPaths(argparse.Action):
     """Expand user- and relative-paths"""
     def __call__(self, parser, namespace, values, option_string=None):
@@ -488,8 +501,8 @@ if __name__ == '__main__':
                 cmd = 'cd src && git clone {}'.format(GCFDB_SRC)
                 subprocess.check_call(cmd, shell=True)
 
-            cmd = 'wget -O Snakefile https://gcf-winecellar.medisin.ntnu.no/snakefiles/Snakefile-{}'.format(pipeline)
-            subprocess.check_call(cmd, shell=True)
+            with open("Snakefile","w") as sn:
+                sn.write(SNAKEFILE_TEMPLATE.format(pipeline=pipeline))
         else:
             raise ValueError('Libprepkit {} is not associated with any Snakemake pipelines'.format(config.get('libprepkit')))
 
