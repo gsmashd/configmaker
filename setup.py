@@ -18,6 +18,6 @@ setup(
     url = "https://github.com/gcfntnu/gcf-tools",
     scripts = ['configmaker/configmaker.py', 'testdata/create_testdata.py'],
     packages=['configmaker', 'testdata'],
-    install_requires=['glob', 're', 'pandas', 'argparse', 'logging', 'xlrd>=1.0.0'],
-    setup_requires=['glob', 're', 'pandas', 'argparse', 'logging', 'xlrd>=1.0.0'],
+    install_requires=['pandas', 'xlrd>=1.0.0'],
+    setup_requires=['pandas', 'xlrd>=1.0.0'],
 )
