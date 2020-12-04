@@ -1,0 +1,34 @@
+[Header]
+IEMFileVersion,5
+ExperimentName,GCF-2020-747
+Date,2020-10-19
+Workflow,GenerateFASTQ
+Application,FASTQ Only
+Instrument Type,MiSeq
+Assay,TruSeq DNA Exome Enrichment
+Index Adapters,TruSeq DNA CD Indexes (96 Indexes)
+Chemistry,Amplicon
+[Reads]
+276
+276
+[Settings]
+CustomRead1PrimerMix,C1
+CustomRead2PrimerMix,C3
+ReverseComplement,0
+[CustomOptions]
+Organism,N/A
+Libprep,QIAseq 16S ITS Region Panels
+User,Giskeoedegaard Sangermani
+Rerun,False
+RemoveHumanReads,False
+SingleCell,False
+TrimAdapter,False
+SensitiveData,False
+ReverseComplementIndexP5,False
+ReverseComplementIndexP7,False
+[Data]
+Sample_ID,Sample_Plate,Sample_Well,Index_Plate_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+96,,,,D707,CTGAAGCT,D501,TATAGCCT,GCF-2020-747,371_MPM_0m_20161026
+116,,,,D703,CGCTCATT,D503,CCTATCCT,GCF-2020-747,205_STS_0m_20150615
+120,,,,D707,CTGAAGCT,D503,CCTATCCT,GCF-2020-747,245_EGJ_0m_20151028
+152,,,,D703,CGCTCATT,D506,TAATCTTA,GCF-2020-747,584_0m_20161116
