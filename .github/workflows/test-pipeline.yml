@@ -58,4 +58,9 @@ jobs:
       run: |
         configmaker.py ../.tests/configmaker/201022_NB501038_0238_AHKWNTBGXG/ --create-fastq-dir --create-project
         rm -rf *
+    - name: configmaker can create rna-seq project
+      working-directory: tmp
+      run: |
+        configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG --create-fastq-dir --create-project
+        rm -rf *
         
