@@ -38,10 +38,15 @@ jobs:
       run: |
         configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ --create-fastq-dir 
         rm -rf *
-    - name: configmaker can init project with multiple runfolders
+    - name: configmaker can use multiple runfolders
       working-directory: tmp
       run: | 
         configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ ../.tests/configmaker/201020_M03942_0355_000000000-CVF53/ 
+        rm -rf *
+    - name: configmaker can keep batch with multiple runfolders
+      working-directory: tmp
+      run: | 
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ ../.tests/configmaker/201020_M03942_0355_000000000-CVF53/ --keep-batch
         rm -rf *
     - name: configmaker can init microbiome project
       working-directory: tmp
