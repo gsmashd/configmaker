@@ -1,6 +1,6 @@
-# This workflow will install snakemake and test rule bfq_all
+# This workflow will install gcf-tools and test configmaker
 
-name: Test pipeline
+name: Test configmaker
 
 on: [push, pull_request]
 
