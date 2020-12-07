@@ -1,0 +1,575 @@
+base_count_desc: ''
+base_count_multiplier: 1
+base_count_prefix: ''
+custom_data:
+  general_statistics:
+    data:
+      '100':
+        External_ID: 314_AAEK_0m_20160420
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '101':
+        External_ID: 315_HTB_0m_20160425
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '102':
+        External_ID: 316_AME_0m_20160425
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '103':
+        External_ID: 297_HRG_0m_20160226
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '104':
+        External_ID: 292_SJA_12m_20160303
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '105':
+        External_ID: 293_ALT_12m_20160311
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '106':
+        External_ID: 318_IHA_0m_20160426
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '107':
+        External_ID: 317_WML_0m_20160427
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '108':
+        External_ID: 198_KSR_0m_20150601
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '109':
+        External_ID: 188_ABE_12m_20150604
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '110':
+        External_ID: 201_AHA_0m_20150609
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '111':
+        External_ID: 193_WLK_0m_20150610
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '112':
+        External_ID: 200_LMV_0m_20150610
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '113':
+        External_ID: 195_KIH_12m_20150612
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '114':
+        External_ID: 199_DDT_12m_20150617
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '115':
+        External_ID: 206_AHO_0m_20150618
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '116':
+        External_ID: 205_STS_0m_20150615
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '117':
+        External_ID: 244_KAA_0m_20151012
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '118':
+        External_ID: 241_CAO_0m_20151013
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '119':
+        External_ID: 242_KJJ_0m_20151014
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '120':
+        External_ID: 245_EGJ_0m_20151028
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '121':
+        External_ID: 246_HMA_0m_20151015
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '122':
+        External_ID: 248_EMS_0m_20151020
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '123':
+        External_ID: 249_NSK_0m_20151015
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '124':
+        External_ID: 251_LME_0m_20151026
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '125':
+        External_ID: 252_SFR_0m_20151104
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '126':
+        External_ID: 215_KFE_12m_20160816
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '127':
+        External_ID: 211_ALS_12m_20160823
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '128':
+        External_ID: 210_BLS_12m_20160907
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '129':
+        External_ID: 224_ESE_12m_20160920
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '130':
+        External_ID: 203_HBJ_12m_20160921
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '131':
+        External_ID: 227_HBM_12m_20160922
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '132':
+        External_ID: 228_VRH_12m_20160923
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '133':
+        External_ID: 221_ITH_12m_20160927
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '134':
+        External_ID: 207_FSV_12m_20160923
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '135':
+        External_ID: 65_MHU_0m_20151127
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '136':
+        External_ID: 93_ELH_12m_20151202
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '137':
+        External_ID: 87_EOD_12m_20151125
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '138':
+        External_ID: 92_KDA_12m_20151203
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '139':
+        External_ID: 95_AHA_12m_20151203
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '140':
+        External_ID: 76_MWAA_12m_20151203
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '141':
+        External_ID: 99_KHB_12m_20151207
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '142':
+        External_ID: 121_RAM_12m_20160225
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '143':
+        External_ID: 122_THE_12m_20160204
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '144':
+        External_ID: 136_EKR_12m_20160216
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '145':
+        External_ID: 138_OIH_12m_20160215
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '146':
+        External_ID: 579_0m_20161024
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '147':
+        External_ID: 576_0m_20161012
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '148':
+        External_ID: 578_0m_20161019
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '149':
+        External_ID: 577_0m_20161012
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '150':
+        External_ID: 582_0m_20161109
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '151':
+        External_ID: 580_0m_20161031
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '152':
+        External_ID: 584_0m_20161116
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '153':
+        External_ID: 581_0m_20161101
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '154':
+        External_ID: 583_0m_20161114
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '155':
+        External_ID: 133_MKA_12m_20160229
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '156':
+        External_ID: 123_EMD_0m_20150121
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '157':
+        External_ID: 140_LMG_12m_20160218
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '158':
+        External_ID: 120_SMO_0m_20150113
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '159':
+        External_ID: 123_EMD_12m_20160208
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '160':
+        External_ID: 134_RHO_0m_20150128
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '161':
+        External_ID: 110_DHA_0m_20141210
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '162':
+        External_ID: 556_12m_20170518
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '163':
+        External_ID: 554_12m_20170511
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '164':
+        External_ID: 555_12m_20170508
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '165':
+        External_ID: 562_12m_20170530
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '166':
+        External_ID: 553_12m_20170419
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '167':
+        External_ID: 557_12m_20170516
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '168':
+        External_ID: 561_12m_20170613
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '169':
+        External_ID: 552_12m_20170509
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '170':
+        External_ID: 551_12m_20170331
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '171':
+        External_ID: 568_12m_20170922
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '172':
+        External_ID: 574_12m_20171105
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '173':
+        External_ID: 573_12m_20171025
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '174':
+        External_ID: 569_12m_20170919
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '175':
+        External_ID: 565_12m_20170822
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '176':
+        External_ID: 566_12m_20170818
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '177':
+        External_ID: 563_12m_20170823
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '178':
+        External_ID: 567_12m_20170822
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '179':
+        External_ID: 564_12m_20170619
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '90':
+        External_ID: 364_HAH_0m_20161012
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '91':
+        External_ID: 367_KGN_0m_20161021
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '92':
+        External_ID: 368_BUR_0m_20161024
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '93':
+        External_ID: 369_ESY_0m_20161024
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '94':
+        External_ID: 370_LOL_0m_20161024
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '95':
+        External_ID: 365_KSA_0m_20161024
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '96':
+        External_ID: 371_MPM_0m_20161026
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '97':
+        External_ID: 349_AGJ_0m_20160908
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '98':
+        External_ID: 363_EGR_0m_20161012
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      '99':
+        External_ID: 313_BAG_0m_20160414
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Sample
+      Ctrl_H2O:
+        External_ID: Ctrl_H2O
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Control
+      Ctrl_QIA_1:
+        External_ID: Ctrl_QIA_1
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Quality_Control
+      Ctrl_QIA_2:
+        External_ID: Ctrl_QIA_2
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Quality_Control
+      Ctrl_QIA_3:
+        External_ID: Ctrl_QIA_3
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Quality_Control
+      Ctrl_ZGS_1:
+        External_ID: Ctrl_ZGS_1
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Mock_Community_Control
+      Ctrl_ZMC_1:
+        External_ID: Ctrl_ZMC_1
+        Fragment_Length: 601
+        Sample_Biosource: fecal sample (human)
+        Sample_Group: Mock_Community_Control
+    pconfig:
+    - External_ID:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 0
+        scale: false
+      Fragment_Length:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 35
+        scale: false
+      Sample_Biosource:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 10
+        scale: false
+      Sample_Group:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 20
+        scale: false
+    plot_type: generalstats
+custom_logo: /opt/images/logo_ntnu.png
+custom_logo_title: Genomics Core Facility
+custom_logo_url: https://www.ntnu.edu/mh/gcf
+extra_fn_clean_exts:
+- .gz
+- .fastq
+- _screen.txt
+- .namesorted
+- _fastp
+- .fastp
+fastqscreen_simpleplot: true
+intro_text: This report is generated for projects run at Genomics Core Facility, NTNU,
+  Trondheim. The results are reported per sample.
+megaqc_access_token: wEW80XSMp0zmWBGYoH29iwPb3izPeYpUvEE0QrCFE3Q1q8b9zP5FusbuFqFFi9dUrnyQGZEJhsRBQr16
+megaqc_url: http://gcf-megaqc.medisin.ntnu.no:443/api/upload_data
+read_count_desc: ''
+read_count_multiplier: 1
+read_count_prefix: ''
+remove_sections:
+- fastqc_rnaseq_sequence_counts
+- fastqc_rnaseq_per_base_sequence_quality
+- fastqc_rnaseq_per_sequence_quality_scores
+- fastqc_rnaseq_per_sequence_gc_content
+- fastqc_rnaseq_per_base_n_content
+- fastqc_rnaseq_sequence_duplication_levels
+- fastqc_rnaseq_status_checks
+- fastqc_sequence_counts
+- fastqc_per_base_sequence_quality
+- fastqc_per_sequence_quality_scores
+- fastqc_per_sequence_gc_content
+- fastqc_per_base_n_content
+- fastqc_sequence_duplication_levels
+- fastqc_status_checks
+report_header_info:
+- Contact E-mail: arnar.flatberg@ntnu.no
+- Sequencing Platform: MiSeq StOlav
+- Read Geometry: 'Paired end - forward read length (R1): 276, reverse read length
+    (R2): 276'
+- Lib prep kit: QIAseq 16S ITS Region Panels
+report_section_order:
+  cellranger:
+    order: 1000
+  fastp:
+    order: 950
+  fastq_screen:
+    order: 800
+  fastqc:
+    order: 900
+  fastqc_rnaseq:
+    order: 900
+  regions:
+    order: 1000
+table_columns_placement:
+  fastp:
+    after_filtering_gc_content: 116
+    before_filtering_total_reads: 110
+    pct_adapter: 114
+    pct_surviving: 112
+table_columns_visible:
+  fastp:
+    pct_duplication: false
+thousandsSep_format: ' '
+title: GCF-2020-747

@@ -1,0 +1,66 @@
+# This workflow will install gcf-tools and test configmaker
+
+name: Test configmaker
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.6']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel
+        python setup.py build
+        python setup.py install 
+    - name: configmaker.py can initialize
+      run: |
+        configmaker.py --help
+    - name: create_testdata.py can initialize
+      run: | 
+        create_testdata.py --help
+    - name: Setup tmp
+      run: |
+        mkdir tmp
+    - name: configmaker can create fastq dir
+      working-directory: tmp
+      run: |
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ --create-fastq-dir 
+        rm -rf *
+    - name: configmaker can use multiple runfolders
+      working-directory: tmp
+      run: | 
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ ../.tests/configmaker/201020_M03942_0355_000000000-CVF55/ 
+        rm -rf *
+    - name: configmaker can keep batch with multiple runfolders
+      working-directory: tmp
+      run: | 
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ ../.tests/configmaker/201020_M03942_0355_000000000-CVF55/ --keep-batch
+        rm -rf *
+    - name: configmaker can create microbiome project
+      working-directory: tmp
+      run: |
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ --create-fastq-dir --create-project
+        rm -rf *
+    - name: configmaker can create single-cell project
+      working-directory: tmp
+      run: |
+        configmaker.py ../.tests/configmaker/201022_NB501038_0238_AHKWNTBGXG/ --create-fastq-dir --create-project
+        rm -rf *
+    - name: configmaker can create rna-seq project
+      working-directory: tmp
+      run: |
+        configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG --create-fastq-dir --create-project
+        rm -rf *
+        

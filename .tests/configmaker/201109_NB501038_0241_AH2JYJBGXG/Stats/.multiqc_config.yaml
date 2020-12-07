@@ -1,0 +1,330 @@
+base_count_desc: ''
+base_count_multiplier: 1
+base_count_prefix: ''
+custom_data:
+  general_statistics:
+    data:
+      K12A_2:
+        260/230: 0.36
+        260/280: 2.29
+        Concentration: 8.26
+        Customer_Comment: .nan
+        External_ID: K12A_2
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: K12A
+      K12H_1:
+        260/230: 0.68
+        260/280: 1.93
+        Concentration: 302.5
+        Customer_Comment: .nan
+        External_ID: K12H_1
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: K12H
+      K12_2:
+        260/230: 0.54
+        260/280: 2.3
+        Concentration: 16.35
+        Customer_Comment: .nan
+        External_ID: K12_2
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: K12
+      K2A_2:
+        260/230: 0.66
+        260/280: 2.02
+        Concentration: 29.74
+        Customer_Comment: .nan
+        External_ID: K2A_2
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: K2A
+      K2H_1:
+        260/230: 1.2
+        260/280: 1.96
+        Concentration: 370.7
+        Customer_Comment: .nan
+        External_ID: K2H_1
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: K2H
+      K2H_2:
+        260/230: 1.3
+        260/280: 1.97
+        Concentration: 22.54
+        Customer_Comment: .nan
+        External_ID: K2H_2
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: K2H
+      KCA_2:
+        260/230: 0.24
+        260/280: 1.79
+        Concentration: 9.43
+        Customer_Comment: .nan
+        External_ID: KCA_2
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: KCA
+      KCH_1:
+        260/230: 0.83
+        260/280: 1.97
+        Concentration: 310.0
+        Customer_Comment: _1 og _2 = parallell 1 og 2
+        External_ID: KCH_1
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: KCH
+      KCH_2:
+        260/230: 1.51
+        260/280: 2.15
+        Concentration: 26.69
+        Customer_Comment: .nan
+        External_ID: KCH_2
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: KCH
+      P12A_1:
+        260/230: 1.21
+        260/280: 1.97
+        Concentration: 40.87
+        Customer_Comment: .nan
+        External_ID: P12A_1
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: P12A
+      P12A_2:
+        260/230: 1.28
+        260/280: 1.95
+        Concentration: 36.03
+        Customer_Comment: .nan
+        External_ID: P12A_2
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: P12A
+      P1A_1:
+        260/230: 1.48
+        260/280: 2.04
+        Concentration: 56.94
+        Customer_Comment: .nan
+        External_ID: P1A_1
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: P1A
+      P1A_2:
+        260/230: 1.26
+        260/280: 1.98
+        Concentration: 113.5
+        Customer_Comment: .nan
+        External_ID: P1A_2
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: P1A
+      P1H_1:
+        260/230: 1.53
+        260/280: 1.97
+        Concentration: 132.4
+        Customer_Comment: .nan
+        External_ID: P1H_1
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: P1H
+      P1H_3:
+        260/230: 1.8
+        260/280: 2.02
+        Concentration: 301.4
+        Customer_Comment: .nan
+        External_ID: P1H_3
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: P1H
+      P1H_4:
+        260/230: 1.51
+        260/280: 2.0
+        Concentration: 177.7
+        Customer_Comment: "Og om pr\xF8ve 13 er tom, s\xE5 m\xE5 hele serien (13,14,15)\
+          \ erstattes "
+        External_ID: P1H_4
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: P1H
+      P1H_6:
+        260/230: 1.49
+        260/280: 1.99
+        Concentration: 170.2
+        Customer_Comment: .nan
+        External_ID: P1H_6
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: P1H
+      PCA_1:
+        260/230: 0.85
+        260/280: 1.93
+        Concentration: 62.02
+        Customer_Comment: .nan
+        External_ID: PCA_1
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: PCA
+      PCA_2:
+        260/230: 0.98
+        260/280: 2.03
+        Concentration: 53.63
+        Customer_Comment: .nan
+        External_ID: PCA_2
+        Fragment_Length: 200
+        Sample_Biosource: A549 cells
+        Sample_Group: PCA
+      PCH_1:
+        260/230: 0.92
+        260/280: 2.15
+        Concentration: 12.51
+        Customer_Comment: .nan
+        External_ID: PCH_1
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: PCH
+      PCH_3:
+        260/230: 1.06
+        260/280: 2.02
+        Concentration: 137.3
+        Customer_Comment: "Erstating for pr\xF8ve nr 10 og 11 om ikke pr\xF8ve nr\
+          \ 7 og 8 er tomme"
+        External_ID: PCH_3
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: PCH
+      PCH_4:
+        260/230: 1.5
+        260/280: 1.96
+        Concentration: 154.9
+        Customer_Comment: "Erstating for 7,8,10,12 om pr\xF8ve 7 el 8 er tomme. "
+        External_ID: PCH_4
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: PCH
+      PCH_5:
+        260/230: 0.36
+        260/280: 1.92
+        Concentration: 122.5
+        Customer_Comment: .nan
+        External_ID: PCH_5
+        Fragment_Length: 200
+        Sample_Biosource: HaCaT cells
+        Sample_Group: PCH
+    pconfig:
+    - 260/230:
+        format: '{}'
+        max: 1.8
+        min: 0
+        placement: 40
+        scale: PuBu
+      260/280:
+        format: '{}'
+        max: 2.3
+        min: 0
+        placement: 50
+        scale: BuGn
+      Concentration:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 50
+        scale: false
+      Customer_Comment:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 30
+        scale: false
+      External_ID:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 0
+        scale: false
+      Fragment_Length:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 35
+        scale: false
+      Sample_Biosource:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 10
+        scale: false
+      Sample_Group:
+        format: '{}'
+        max: null
+        min: 0
+        placement: 20
+        scale: false
+    plot_type: generalstats
+custom_logo: /opt/images/logo_ntnu.png
+custom_logo_title: Genomics Core Facility
+custom_logo_url: https://www.ntnu.edu/mh/gcf
+extra_fn_clean_exts:
+- .gz
+- .fastq
+- _screen.txt
+- .namesorted
+- _fastp
+- .fastp
+- _R1
+fastqscreen_simpleplot: true
+intro_text: This report is generated for projects run at Genomics Core Facility, NTNU,
+  Trondheim. The results are reported per sample.
+megaqc_access_token: wEW80XSMp0zmWBGYoH29iwPb3izPeYpUvEE0QrCFE3Q1q8b9zP5FusbuFqFFi9dUrnyQGZEJhsRBQr16
+megaqc_url: http://gcf-megaqc.medisin.ntnu.no:443/api/upload_data
+read_count_desc: ''
+read_count_multiplier: 1
+read_count_prefix: ''
+remove_sections:
+- fastqc_rnaseq_sequence_counts
+- fastqc_rnaseq_per_base_sequence_quality
+- fastqc_rnaseq_per_sequence_quality_scores
+- fastqc_rnaseq_per_sequence_gc_content
+- fastqc_rnaseq_per_base_n_content
+- fastqc_rnaseq_sequence_duplication_levels
+- fastqc_rnaseq_status_checks
+- fastqc_sequence_counts
+- fastqc_per_base_sequence_quality
+- fastqc_per_sequence_quality_scores
+- fastqc_per_sequence_gc_content
+- fastqc_per_base_n_content
+- fastqc_sequence_duplication_levels
+- fastqc_status_checks
+report_header_info:
+- Contact E-mail: arnar.flatberg@ntnu.no
+- Sequencing Platform: NextSeq 500
+- Read Geometry: 'Single end - read length (R1): 86'
+- Organism: homo_sapiens
+- Lib prep kit: Lexogen SENSE Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion
+    Kit V1.2)
+report_section_order:
+  cellranger:
+    order: 1000
+  fastp:
+    order: 950
+  fastq_screen:
+    order: 800
+  fastqc:
+    order: 900
+  fastqc_rnaseq:
+    order: 900
+  regions:
+    order: 1000
+table_columns_placement:
+  fastp:
+    after_filtering_gc_content: 116
+    before_filtering_total_reads: 110
+    pct_adapter: 114
+    pct_surviving: 112
+table_columns_visible:
+  fastp:
+    pct_duplication: false
+thousandsSep_format: ' '
+title: GCF-2020-751
