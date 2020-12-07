@@ -33,7 +33,19 @@ jobs:
     - name: Setup tmp
       run: |
         mkdir tmp
+    - name: configmaker can create fastq dir
+      working-directory: tmp
+      run: |
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ --create-fastq-dir 
+        rm -rf *
+    - name: configmaker can init project with multiple runfolders
+      working-directory: tmp
+      run: | 
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ ../.tests/configmaker/201020_M03942_0355_000000000-CVF53/ 
+        rm -rf *
     - name: configmaker can init microbiome project
       working-directory: tmp
       run: |
         configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ --create-fastq-dir --create-project
+        rm -rf *
+        
