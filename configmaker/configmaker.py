@@ -32,11 +32,13 @@ PIPELINE_MAP = {
     'Illumina TruSeq Stranded Total RNA Library Prep (Human/Mouse/Rat)': 'rna-seq',
     'Illumina TruSeq Stranded Total RNA Library Prep (Globin)': 'rna-seq',
     'Illumina TruSeq Stranded mRNA Library Prep': 'rna-seq',
+    'CORALL Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion Kit V1.2)': 'rna-seq',
     'QIAseq 16S ITS Region Panels': 'microbiome',
     '16S Metagenomic Sequencing Library Prep': 'microbiome',
     'ITS Low Input GCF Custom': 'microbiome',
     '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell',
-    'Bioo Scientific NEXTflex Small RNA-Seq Kit v3': 'small-rna'
+    'Bioo Scientific NEXTflex Small RNA-Seq Kit v3': 'small-rna',
+    'Illumina TruSeq Small RNA Library Prep Kit': 'small-rna',
 }
 
 REPO_MAP = {
