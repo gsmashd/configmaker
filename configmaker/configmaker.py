@@ -51,7 +51,7 @@ REPO_MAP = {
 GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
 
 SNAKEFILE_TEMPLATE = """
-fromm snakemake.utils import validate, min_version
+from snakemake.utils import validate, min_version
 
 configfile:
     'config.yaml'
