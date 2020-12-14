@@ -15,9 +15,9 @@ setup(
     author_email = "arnar.flatberg@ntnu.no",
     description = ("In-house tool to create configs used in bio informatics pipelines at GCF, NTNU, Trondheim."),
     license = "BSD",
-    url = "https://github.com/gcfntnu/configmaker",
+    url = "https://github.com/gcfntnu/gcf-tools",
     scripts = ['configmaker/configmaker.py', 'testdata/create_testdata.py'],
     packages=['configmaker', 'testdata'],
-    install_requiress=['glob', 're', 'pandas', 'argparse', 'logging','xlrd>=1.0.0'],
-    setup_requiress=['glob', 're', 'pandas', 'argparse', 'logging','xlrd>=1.0.0'],
+    install_requires=['pandas', 'xlrd>=1.0.0', 'pyyaml'],
+    setup_requires=['pandas', 'xlrd>=1.0.0', 'pyyaml'],
 )

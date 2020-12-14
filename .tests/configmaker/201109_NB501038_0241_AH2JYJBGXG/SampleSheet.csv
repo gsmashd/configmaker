@@ -1,0 +1,28 @@
+[Header]
+IEMFileVersion,4
+Date,2020-11-09
+Workflow,GenerateFASTQ
+Application,NextSeqFASTQOnly
+Assay,
+Description,HaCaT_A549
+Chemistry,Default
+ExperimentName,GCF-2020-751
+[Reads]
+75
+[CustomOptions]
+Organism,homo_sapiens
+Libprep,Lexogen SENSE Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion Kit V1.2)
+User,Helle Samdal
+Rerun,False
+RemoveHumanReads,False
+SingleCell,False
+TrimAdapter,False
+SensitiveData,False
+ReverseComplementIndexP5,False
+ReverseComplementIndexP7,False
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+K12H_1,,,C01,7003,ACCAGT,GCF-2020-751,
+K2H_2,,,E01,7005,ACATTA,GCF-2020-751,
+K2A_2,,,B02,7010,CGGTTA,GCF-2020-751,
+P12A_2,,,A03,7017,TCTTAA,GCF-2020-751,

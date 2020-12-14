@@ -1,0 +1,26 @@
+[Header]
+IEMFileVersion,4
+Date,2020-10-22
+Workflow,GenerateFASTQ
+Application,NextSeqFASTQOnly
+Assay,
+Description,SingleCell
+Chemistry,Default
+ExperimentName,GCF-2020-739
+[Reads]
+28
+56
+[CustomOptions]
+Organism,mus_musculus
+Libprep,10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3
+User,Paal Saetrom
+Rerun,False
+RemoveHumanReads,False
+SingleCell,True
+TrimAdapter,False
+SensitiveData,False
+ReverseComplementIndexP5,False
+ReverseComplementIndexP7,False
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
+LPX2,,,,SI-GA-F6,SI-GA-F6,GCF-2020-739,

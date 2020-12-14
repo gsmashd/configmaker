@@ -32,11 +32,13 @@ PIPELINE_MAP = {
     'Illumina TruSeq Stranded Total RNA Library Prep (Human/Mouse/Rat)': 'rna-seq',
     'Illumina TruSeq Stranded Total RNA Library Prep (Globin)': 'rna-seq',
     'Illumina TruSeq Stranded mRNA Library Prep': 'rna-seq',
+    'CORALL Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion Kit V1.2)': 'rna-seq',
     'QIAseq 16S ITS Region Panels': 'microbiome',
     '16S Metagenomic Sequencing Library Prep': 'microbiome',
     'ITS Low Input GCF Custom': 'microbiome',
     '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell',
-    'Bioo Scientific NEXTflex Small RNA-Seq Kit v3': 'small-rna'
+    'Bioo Scientific NEXTflex Small RNA-Seq Kit v3': 'small-rna',
+    'Illumina TruSeq Small RNA Library Prep Kit': 'small-rna',
 }
 
 REPO_MAP = {
@@ -47,6 +49,19 @@ REPO_MAP = {
 }
 
 GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
+
+SNAKEFILE_TEMPLATE = """
+from snakemake.utils import validate, min_version
+
+configfile:
+    'config.yaml'
+
+include:
+    'src/{pipeline}/{pipeline}.sm'
+include:
+    'src/{pipeline}/rules/bfq.rules'
+
+"""
 
 class FullPaths(argparse.Action):
     """Expand user- and relative-paths"""
@@ -297,11 +312,11 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
         merge.update(s_d)
     merge = pd.DataFrame.from_dict(merge, orient='index')
     check_existence_of_samples(sample_dict.keys(), merge)
-    sample_df = pd.DataFrame.from_dict(sample_dict,orient='index')
-    sample_df = sample_df.merge(merge,on='Sample_ID',how='left')
+    sample_df = pd.DataFrame.from_dict(sample_dict, orient='index')
+    sample_df = sample_df.merge(merge, on='Sample_ID', how='left')
     sample_df.reset_index()
     sample_df.index = sample_df['Sample_ID']
-    sample_df.fillna('',inplace=True)
+    sample_df.fillna('', inplace=True)
     if new_project_id:
         sample_df.rename(columns={'Project_ID': 'Src_Project_ID'}, inplace=True)
         sample_df.insert(loc=0, column="Project_ID", value=[new_project_id]*len(sample_df))
@@ -488,8 +503,8 @@ if __name__ == '__main__':
                 cmd = 'cd src && git clone {}'.format(GCFDB_SRC)
                 subprocess.check_call(cmd, shell=True)
 
-            cmd = 'wget -O Snakefile https://gcf-winecellar.medisin.ntnu.no/snakefiles/Snakefile-{}'.format(pipeline)
-            subprocess.check_call(cmd, shell=True)
+            with open("Snakefile","w") as sn:
+                sn.write(SNAKEFILE_TEMPLATE.format(pipeline=pipeline))
         else:
             raise ValueError('Libprepkit {} is not associated with any Snakemake pipelines'.format(config.get('libprepkit')))
 
