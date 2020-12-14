@@ -295,6 +295,7 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
         merge_ssub = customer
     merge_ssub["Sample_ID"] = merge_ssub["Sample_ID"].astype(str)
     merge_ssub.index = merge_ssub["Sample_ID"]
+    print(merge_ssub)
     merge_ssub_d = merge_ssub.to_dict(orient='index')
     return merge_ssub_d
 
