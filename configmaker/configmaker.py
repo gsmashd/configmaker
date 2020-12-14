@@ -275,12 +275,12 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
             'Comment': 'Lab_Comment'
         }
 
-    customer = pd.read_excel(ssub_path, sheet_name=0, skiprows=14, engine='openpyxl')
+    customer = pd.read_excel(ssub_path, sheet_name=0, skiprows=14)
     customer.rename(columns=customer_column_map, inplace=True, errors='ignore')
     remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
     customer = customer.drop(remove_cols, axis=1, errors='ignore')
 
-    lab = pd.read_excel(ssub_path, sheet_name=2, engine='openpyxl')
+    lab = pd.read_excel(ssub_path, sheet_name=2)
     lab.rename(columns=lab_column_map, inplace=True, errors='ignore')
     lab.drop(['Sample_Name','Project ID','KIT'], inplace=True, errors='ignore')
 
@@ -295,6 +295,7 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
         merge_ssub = customer
     merge_ssub["Sample_ID"] = merge_ssub["Sample_ID"].astype(str)
     merge_ssub.index = merge_ssub["Sample_ID"]
+    print(merge_ssub)
     merge_ssub_d = merge_ssub.to_dict(orient='index')
     return merge_ssub_d
 

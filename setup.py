@@ -18,6 +18,6 @@ setup(
     url = "https://github.com/gcfntnu/gcf-tools",
     scripts = ['configmaker/configmaker.py', 'testdata/create_testdata.py'],
     packages=['configmaker', 'testdata'],
-    install_requires=['pandas', 'openpyxl', 'pyyaml'],
-    setup_requires=['pandas', 'openpyxl', 'pyyaml'],
+    install_requires=['pandas', 'xlrd==1.2.0', 'pyyaml'],
+    setup_requires=['pandas', 'xlrd==1.2.0', 'pyyaml'],
 )
