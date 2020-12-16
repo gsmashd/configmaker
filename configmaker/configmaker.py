@@ -41,14 +41,9 @@ PIPELINE_MAP = {
     'Illumina TruSeq Small RNA Library Prep Kit': 'small-rna',
 }
 
-REPO_MAP = {
-    'rna-seq': 'https://github.com/gcfntnu/rna-seq.git',
-    'single-cell': 'https://github.com/gcfntnu/single-cell.git',
-    'microbiome': 'https://github.com/gcfntnu/microbiome.git',
-    'small-rna': 'https://github.com/gcfntnu/small-rna.git'
-}
-
 GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
+
+GCF_WORKFLOWS_SRC = "https://github.com/gcfntnu/gcf-workflows.git"
 
 SNAKEFILE_TEMPLATE = """
 from snakemake.utils import validate, min_version
@@ -57,9 +52,9 @@ configfile:
     'config.yaml'
 
 include:
-    'src/{pipeline}/{pipeline}.sm'
+    'src/gcf-workflows/{pipeline}/{pipeline}.sm'
 include:
-    'src/{pipeline}/rules/bfq.rules'
+    'src/gcf-workflows/{pipeline}/rules/bfq.rules'
 
 """
 
@@ -495,13 +490,9 @@ if __name__ == '__main__':
     if args.create_project:
         pipeline = PIPELINE_MAP.get(config.get('libprepkit', None), None)
         if pipeline:
-            if not os.path.exists("src/{}".format(pipeline)):
+            if not os.path.exists("src/gcf-workflows"):
                 os.makedirs('src', exist_ok=True)
-                cmd = 'cd src && git clone {}'.format(REPO_MAP.get(pipeline, None))
-                subprocess.check_call(cmd, shell=True)
-
-            if not (os.path.exists("src/gcfdb") or os.environ.get("GCF_DB")):
-                cmd = 'cd src && git clone {}'.format(GCFDB_SRC)
+                cmd = 'cd src && git clone {}'.format(GCF_WORKFLOWS_SRC)
                 subprocess.check_call(cmd, shell=True)
 
             with open("Snakefile","w") as sn:
