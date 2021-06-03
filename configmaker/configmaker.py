@@ -475,7 +475,7 @@ if __name__ == '__main__':
             cmd = 'cd src && git clone {}'.format(GCF_WORKFLOWS_SRC)
             subprocess.check_call(cmd, shell=True)
 
-	with open("/opt/gcf-workflows/libprep.config","r") as libprepconf_f:
+        with open("/opt/gcf-workflows/libprep.config","r") as libprepconf_f:
             libconf = yaml.load(libprepconf_f)
 
         libkit = config['libprepkit'] + (" PE" if len(config['read_geometry']) > 1 else " SE")
