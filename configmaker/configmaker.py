@@ -26,23 +26,6 @@ SEQUENCERS = {
     'M05617' : 'MiSeq SINTEF'
 }
 
-PIPELINE_MAP = {
-    'Lexogen SENSE Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion Kit V1.2)': 'rna-seq',
-    'Lexogen SENSE mRNA-Seq Library Prep Kit V2': 'rna-seq',
-    'Illumina TruSeq Stranded Total RNA Library Prep (Human/Mouse/Rat)': 'rna-seq',
-    'Illumina TruSeq Stranded Total RNA Library Prep (Globin)': 'rna-seq',
-    'Illumina TruSeq Stranded mRNA Library Prep': 'rna-seq',
-    'CORALL Total RNA-Seq Library Prep Kit (w/RiboCop rRNA Depletion Kit V1.2)': 'rna-seq',
-    'QIAseq 16S ITS Region Panels': 'microbiome',
-    '16S Metagenomic Sequencing Library Prep': 'microbiome',
-    'ITS Low Input GCF Custom': 'microbiome',
-    '10X Genomics Chromium Single Cell 3p GEM Library & Gel Bead Kit v3': 'single-cell',
-    'Bioo Scientific NEXTflex Small RNA-Seq Kit v3': 'small-rna',
-    'Illumina TruSeq Small RNA Library Prep Kit': 'small-rna',
-}
-
-GCFDB_SRC = "https://github.com/gcfntnu/gcfdb.git"
-
 GCF_WORKFLOWS_SRC = "https://github.com/gcfntnu/gcf-workflows.git"
 
 SNAKEFILE_TEMPLATE = """
@@ -52,9 +35,9 @@ configfile:
     'config.yaml'
 
 include:
-    'src/gcf-workflows/{pipeline}/{pipeline}.sm'
+    'src/gcf-workflows/{workflow}/{workflow}.sm'
 include:
-    'src/gcf-workflows/{pipeline}/rules/bfq.rules'
+    'src/gcf-workflows/{workflow}/rules/bfq.rules'
 
 """
 
@@ -487,15 +470,23 @@ if __name__ == '__main__':
 
 
     if args.create_project:
-        pipeline = PIPELINE_MAP.get(config.get('libprepkit', None), None)
-        if pipeline:
-            if not os.path.exists("src/gcf-workflows"):
-                os.makedirs('src', exist_ok=True)
-                cmd = 'cd src && git clone {}'.format(GCF_WORKFLOWS_SRC)
-                subprocess.check_call(cmd, shell=True)
+        if not os.path.exists("src/gcf-workflows"):
+            os.makedirs('src', exist_ok=True)
+            cmd = 'cd src && git clone {}'.format(GCF_WORKFLOWS_SRC)
+            subprocess.check_call(cmd, shell=True)
 
-            with open("Snakefile","w") as sn:
-                sn.write(SNAKEFILE_TEMPLATE.format(pipeline=pipeline))
+        with open("src/gcf-workflows/libprep.config","r") as libprepconf_f:
+            libconf = yaml.load(libprepconf_f)
+
+        libkit = config['libprepkit'] + (" PE" if len(config['read_geometry']) > 1 else " SE")
+        kitconf = libconf.get(libkit, None)
+        if not kitconf:
+            print("Libprepkit {} is not defined in libprep.config. Running with default settings.".format(libkit))
+            workflow = "default"
         else:
-            raise ValueError('Libprepkit {} is not associated with any Snakemake pipelines'.format(config.get('libprepkit')))
+            workflow = kitconf["workflow"]
+
+        with open("Snakefile","w") as sn:
+            sn.write(SNAKEFILE_TEMPLATE.format(workflow=workflow))
+
 

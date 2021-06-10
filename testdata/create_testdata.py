@@ -16,8 +16,7 @@ import logging
 
 import pandas as pd
 
-from configmaker import PIPELINE_MAP
-
+libprepconf_url = "https://raw.githubusercontent.com/gcfntnu/gcf-workflows/main/libprep.config"
 
 def sample_samplesheet(input_fn, output_fn, samples, valid_samples):
     """Subset SampleSheet.csv 
@@ -94,16 +93,22 @@ class BFQoutput():
                     logging.info("identifed gcf number from samplesheet: {}".format(self._gcf_number))
                 if line.startswith('Libprep'):
                     libprep = line.split(',')[1]
-                    if not libprep in PIPELINE_MAP:
-                        warnings.warn('failed to identify pipeline from libprep name, using `NA`')
-                    self.pipeline = PIPELINE_MAP.get(libprep, None)
+                    cmd = "wget -O .libprep.config {}".format(libprepconf_url)
+                    subprocess.check_call(cmd, shell=True)
+                    with open(".libprep.config","r") as libconf_f:
+                        libconf_d = yaml.load(libconf_f)
+                    subprocess.check_call("rm .libprep.config", shell=True)
+                    if libprep + " SE" in libconf_d.keys():
+                        self.pipeline = libconf_d[libprep + ' SE']['workflow']
+                    elif libprep + " PE" in libconf_d.keys():
+                        self.pipeline = libconf_d[libprep + ' PE']['workflow']
+                    else:
+                        warnings.warn('failed to identify pipeline from libprep name, using default workflow')
+                        self.pipeline = "default"
                     logging.info("identifed library prep kit from samplesheet: {}".format(libprep))
                     logging.info("pipeline: {}".format(self.pipeline))
                     break
-        if self.pipeline == 'microbiome':
-            self._fastq_dir = os.path.join(self.dirname, 'raw_fastq_{}'.format(self._gcf_number))
-        else:
-            self._fastq_dir = os.path.join(self.dirname, self._gcf_number)
+        self._fastq_dir = os.path.join(self.dirname, self._gcf_number)
         if not os.path.exists(self._fastq_dir):
             raise ValueError('Missing fastq dir. Expected {}'.format(self._fastq_dir)) 
 
@@ -154,8 +159,6 @@ class BFQoutput():
 
         # susbet and copy fastq files
         fastq_dir_output = os.path.join(output_dir, os.path.basename(self._fastq_dir))
-        if self.pipeline == 'microbiome':
-            fastq_dir_output = fastq_dir_output.replace("raw_fastq_","")
         os.makedirs(fastq_dir_output, exist_ok=True)
         if samples is None:
             SAMPLES = list(self.fastq_files.keys())
@@ -171,7 +174,7 @@ class BFQoutput():
             fq_files = self.fastq_files[sample]
             for fq_basename in fq_files:
                 src = os.path.join(self._fastq_dir, fq_basename)
-                if self.pipeline == 'single-cell' or no_fastq_rename:
+                if self.pipeline == 'singlecell' or no_fastq_rename:
                     dst = os.path.join(fastq_dir_output, fq_basename).replace(".fastq.gz",".fastq")
                     os.makedirs(os.path.dirname(dst), exist_ok=True)
                 else:
@@ -182,7 +185,7 @@ class BFQoutput():
                 logging.info(cmd)
                 subprocess.call(cmd, shell=True)
         # gzip fastq files        
-        if self.pipeline == 'single-cell':
+        if self.pipeline == 'singlecell':
             cmd = 'gzip {}/*/*'.format(fastq_dir_output)
         else:
             cmd = 'gzip {}/*'.format(fastq_dir_output)
