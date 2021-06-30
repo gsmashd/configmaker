@@ -253,12 +253,12 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
             'Comment': 'Lab_Comment'
         }
 
-    customer = pd.read_excel(ssub_path, sheet_name=0, skiprows=14, dtype={'Sample_ID': str})
+    customer = pd.read_excel(ssub_path, sheet_name=0, skiprows=14, dtype={'Unique Sample_ID': str})
     customer.rename(columns=customer_column_map, inplace=True, errors='ignore')
     remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
     customer = customer.drop(remove_cols, axis=1, errors='ignore')
 
-    lab = pd.read_excel(ssub_path, sheet_name=2, dtype={'Sample_ID': str})
+    lab = pd.read_excel(ssub_path, sheet_name=2, dtype={'Unique Sample_ID': str})
     lab.rename(columns=lab_column_map, inplace=True, errors='ignore')
     lab.drop(['Sample_Name','Project ID','KIT'], inplace=True, errors='ignore')
 
