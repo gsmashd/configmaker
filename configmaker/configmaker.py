@@ -35,9 +35,9 @@ configfile:
     'config.yaml'
 
 include:
-    'src/gcf-workflows/{workflow}/{workflow}.sm'
+    'src/gcf-workflows/{workflow}/{workflow}.smk'
 include:
-    'src/gcf-workflows/{workflow}/rules/bfq.rules'
+    'src/gcf-workflows/{workflow}/rules/bfq.smk'
 
 """
 
