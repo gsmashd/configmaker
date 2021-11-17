@@ -36,8 +36,6 @@ configfile:
 
 include:
     'src/gcf-workflows/{workflow}/{workflow}.smk'
-include:
-    'src/gcf-workflows/{workflow}/rules/bfq.smk'
 
 """
 
