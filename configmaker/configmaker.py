@@ -36,8 +36,6 @@ configfile:
 
 include:
     'src/gcf-workflows/{workflow}/{workflow}.smk'
-include:
-    'src/gcf-workflows/{workflow}/rules/bfq.smk'
 
 """
 
@@ -476,7 +474,7 @@ if __name__ == '__main__':
             subprocess.check_call(cmd, shell=True)
 
         with open("src/gcf-workflows/libprep.config","r") as libprepconf_f:
-            libconf = yaml.load(libprepconf_f)
+            libconf = yaml.load(libprepconf_f,Loader=yaml.FullLoader)
 
         libkit = config['libprepkit'] + (" PE" if len(config['read_geometry']) > 1 else " SE")
         kitconf = libconf.get(libkit, None)
