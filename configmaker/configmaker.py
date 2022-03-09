@@ -115,7 +115,7 @@ def get_data_from_samplesheet(fh):
             msg = 'No [data]-section in samplesheet {}'.format(s.name)
             raise RuntimeError(msg)
         if line.startswith('[Data]'):
-            return pd.read_csv(fh, dtype={'Sample_ID': str}), opts_d
+            return pd.read_csv(fh, dtype={'Sample_ID': str, 'Sample_Name': str}), opts_d
         elif line.startswith('[CustomOptions]'):
             custom_opts = True
             continue
