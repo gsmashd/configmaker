@@ -316,9 +316,9 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
     customer['Flowcell_ID'] = flowcell_id
     if keep_batch:
         customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + flowcell_id
-        customer.index = customer['Sample_ID']
+        #customer.index = customer['Sample_ID']
         lab['Sample_ID'] = lab['Sample_ID'].astype(str) + "_" + flowcell_id
-        lab.index = lab['Sample_ID']
+        #lab.index = lab['Sample_ID']
     if not lab.empty:
         merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
     else:
