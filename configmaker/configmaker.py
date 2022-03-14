@@ -216,55 +216,109 @@ def find_samples_batch(df, project_dirs):
             else:
                 pe = 0 if not r2 else 1
                 r2 = [] if not r2 else r2
-                sample_dict[str(row.Sample_ID) + "_" + p_pth.split("/")[-2].split("_")[-1]] = {
+                sample_dict[str(row.Sample_ID) + "_" + os.path.split(p_pth)[-2].split("_")[-1]] = {
                     'R1': ','.join(r1),
                     'R2': ','.join(r2),
                     'paired_end': pe,
-                    'Sample_ID': str(row.Sample_ID) + "_" + p_pth.split("/")[-2].split("_")[-1],
+                    'Sample_ID': str(row.Sample_ID) + "_" + os.path.split(p_pth)[-2].split("_")[-1],
                     'Src_Sample_ID': row.Sample_ID,
                 }
     return sample_dict
 
+
+
 def sample_submission_form_parser(ssub_path, keep_batch=None):
-    customer_column_map = {
-        'Unique Sample ID': 'Sample_ID',
-        'External ID (optional reference sample ID)': 'External_ID',
-        'Sample Group (conditions to be compared)': 'Sample_Group',
-        'Comments (optional info that does not fit in other columns)': 'Customer_Comment',
-        'Sample biosource (examples: celltype/tissue/FFPE)': 'Sample_Biosource',
-        'Project ID': 'Project_ID',
-        'Sample type (e.g RNA or DNA or library)': 'Sample_Type',
-        'Index2_p5 (If dual indexed libraries are submitted, indicate what index sequence is used as p5)': 'Index',
-        'Index1_p7 (If libraries are submitted, indicate what index sequence is used as P7)': 'Index2',
-        'Plate location (if samples delivered in 96 well plates)': 'Plate',
-        'Sample Buffer': 'Sample_Buffer',
-        'Volume (ul)': 'Volume',
-        'Quantification Method': 'Quantification_Method',
-        'Concentration (ng/ul)': 'Concentration',
-        '260/280 ratio': '260/280',
-        '260/230 ratio': '260/230',
-        }
-    lab_column_map = {
-            'Concentration (ng/ul)': 'Concentration',
-            '260/280 ratio': '260/280',
-            '260/230 ratio': '260/230',
-            'Comment': 'Lab_Comment'
-        }
+    """read submsiion form excel file
 
-    customer = pd.read_excel(ssub_path, sheet_name=0, skiprows=14, dtype={'Unique Sample ID': str})
-    customer.rename(columns=customer_column_map, inplace=True, errors='ignore')
+    merge sheets (customer + lab) and santize column names and values 
+    """
+    def customer_mapper(x):
+        """map excel headers to machine friendly headers"""
+        starts = [('Unique', 'Sample_ID'),
+                  ('External', 'External_ID'),
+                  ('Sample Group', 'Sample_Group'),
+                  ('Comment', 'Submitted_Comments'),
+                  ('Sample biosource', 'Sample_Biosource'),
+                  ('Project', 'Project_ID'),
+                  ('Sample type', 'Sample_Type'),
+                  ('Index2', 'Index2'),
+                  ('Index1', 'Index1'),
+                  ('Plate', 'Plate'),
+                  ('Sample buffer', 'Sample_Buffer'),
+                  ('Sample Buffer', 'Sample_Buffer'),
+                  ('Volume', 'Volume'),
+                  ('Quantification', 'Quantification'),
+                  ('Concentration', 'Concentration'),
+                  ('260/280', '260/280'),
+                  ('260/230', '260/230'),
+                  ('Organism', 'Organism')
+                  ]
+        for src, dst in starts:
+            if x.startswith(src):
+                return dst
+        # unknown header value (may be customer added)
+        src_sanitized = x.title()
+        remove = """- ? ( ) [ ] / \ = + < > : ; " ' , * ^ | & .""".split()
+        for r in remove:
+            src_sanitized = src_sanitized.replace(r, '')
+            src_sanitized = src_sanitized.replace(' ', '_')
+        return 'Submitted_' + src_sanitized
+            
+    def lab_mapper(x):
+        starts = [('Concentration', 'Concentration'),
+                  ('260/280', '260/280'),
+                  ('260/230', '260/230'),
+                  ('Comment', 'Comments'),
+                  ('Sample_ID', 'Sample_ID'),
+                  ('Project', 'Project_ID'),
+                  ('RIN', 'RIN'),
+                  ('SpikeIn', 'SpikeIn'),
+                  ('Fragment_Length', 'Fragment_Length'),
+                  ('Fragment_SD', 'Fragment_SD'),
+                  ('Sample Name', 'Sample Name'),
+                  ('KIT', 'KIT')
+                  ]
+        for src, dst in starts:
+            if x.startswith(src):
+                return dst
+        src_sanitized = x.title()
+        remove = """- ? ( ) [ ] / \ = + < > : ; " ' , * ^ | & .""".split()
+        for r in remove:
+            src_sanitized = src_sanitized.replace(r, '')
+            src_sanitized = src_sanitized.replace(' ', '_')
+        return 'Lab_' + src_sanitized
+
+    
+    customer = pd.read_excel(ssub_path, sheet_name=0, skiprows=14, dtype={'Unique Sample ID': str, 'External ID (optional reference sample ID)': str})
+    customer = customer.rename(columns=customer_mapper)
     remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
-    customer = customer.drop(remove_cols, axis=1, errors='ignore')
-
+    remove_cols = list(set(customer.columns).intersection(remove_cols))
+    customer = customer.drop(remove_cols, axis=1)
+    # drop columns with all NaN or empty string
+    customer = customer.dropna(axis='columns', how='all')
+    #customer = customer.loc[:,(customer == '').sum(0) < customer.shape[0]]
+    
     lab = pd.read_excel(ssub_path, sheet_name=2, dtype={'Sample_ID': str})
-    lab.rename(columns=lab_column_map, inplace=True, errors='ignore')
-    lab.drop(['Sample_Name','Project ID','KIT'], inplace=True, errors='ignore')
+    lab = lab.rename(columns=lab_mapper)
+    legacy_cols = list(set(['Sample_Name','KIT']).intersection(lab.columns))
+    lab = lab.drop(legacy_cols, axis=1, errors='ignore')
+    lab = lab.dropna(axis='columns', how='all')
 
+    # lab-sheet will take presedence over customer filled columns
+    shared_cols = list(set(customer.columns).intersection(lab.columns))
+    if 'Sample_ID' in shared_cols:
+        shared_cols.remove('Sample_ID')
+    customer = customer.drop(shared_cols, axis=1)
+
+    flowcell_name = os.path.basename(ssub_path)
+    flowcell_id = flowcell_name.split('_')[-1]
+    customer['Flowcell_Name'] = flowcell_name
+    customer['Flowcell_ID'] = flowcell_id
     if keep_batch:
-        customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + os.path.dirname(ssub_path).split("_")[-1]
-        customer['Flowcell_Name'] = [os.path.basename(pth)]*len(customer)
-        customer['Flowcell_ID'] = [os.path.basename(pth).split("_")[-1]]*len(customer)
-        lab['Sample_ID'] = lab['Sample_ID'].astype(str) + "_" + os.path.dirname(ssub_path).split("_")[-1]
+        customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + flowcell_id
+        customer.index = customer['Sample_ID']
+        lab['Sample_ID'] = lab['Sample_ID'].astype(str) + "_" + flowcell_id
+        lab.index = lab['Sample_ID']
     if not lab.empty:
         merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
     else:
@@ -282,10 +336,25 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
 
     merge = dict()
     for pth, s_d in merge_d.items():
-        intersection = set(merge.keys()).intersection(set(s_d.keys()))
-        if len(intersection) > 0:
-            logger.warning("WARNING: Sampleinfo on {} are updated with values from {}/Sample-Submission-Form.xlsx. Specify a custom sample submission form with --sample-submission-form to force values.".format(', '.join(list(intersection)), pth))
-        merge.update(s_d)
+        for sample_id, vals in s_d.items():
+            if sample_id not in merge:
+                merge[sample_id] = vals
+            else:
+                # merge info from sample
+                sample = merge[sample_id]
+                for k, v in vals.items():
+                    if k == 'Flowcell_Name':
+                        # special case flowcell name to multiple values by comma sep 
+                        v = ','.join([sample[k], v])
+                    elif sample[k] == v or (pd.isnull(v) and pd.isnull(sample[k])):
+                        # equal info between submission forms
+                        pass
+                    else:
+                        # unequal info in submission forms and we are not looking at flowcell
+                        logger.warning("WARNING: Sampleinfo ({}) on {} are updated with values from {}/Sample-Submission-Form.xlsx. Specify a custom sample submission form with --sample-submission-form to force values.".format(v, k, pth))
+                    sample[k] = v
+                merge[sample_id] = sample
+            
     merge = pd.DataFrame.from_dict(merge, orient='index')
     check_existence_of_samples(sample_dict.keys(), merge)
     sample_df = pd.DataFrame.from_dict(sample_dict, orient='index')
@@ -385,6 +454,7 @@ if __name__ == '__main__':
     parser.add_argument("--machine",  help="Sequencer model.")
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     parser.add_argument("--create-project", action='store_true', help="Pull analysis pipeline and snakemake file based on libkit")
+    parser.add_argument("--create-peppy", action='store_true', help="Create a peppy project config file and samples/subsamples tsv files")
     parser.add_argument("--keep-batch", action='store_true', help="Sample names will be made unique for each batch.")
 
     args = parser.parse_args()
@@ -420,7 +490,10 @@ if __name__ == '__main__':
         os.makedirs(default_fastq_dir, exist_ok=True)
         s_ids = sample_dict.keys()
         if args.keep_batch:
-            s_ids = set([s.split("_")[0] for s in s_ids])
+            # split out date addition postfix from sample_ids with support for sample_ids with underscore in name
+            s_ids = ['_'.join(n[:-1]) if len(n)>2 else n[0] for n in [e.split('_') for e in s_ids]]
+            s_ids = list(set(s_ids)) # unique sample_ids
+            
         for sample_id in s_ids:
             for pid in project_dirs:
                 r1_src, r2_src = match_fastq(sample_id, pid, rel_path=False)
@@ -487,4 +560,9 @@ if __name__ == '__main__':
         with open("Snakefile","w") as sn:
             sn.write(SNAKEFILE_TEMPLATE.format(workflow=workflow))
 
+
+    if args.create_peppy:
+        import peppy_support
+        peppy_support.create_peppy(config, output_dir='peppy_project')
+    
 
