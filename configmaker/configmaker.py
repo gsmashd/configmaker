@@ -4,13 +4,15 @@ import sys
 import os
 import re
 import glob
-import argparse
-import pandas as pd
-import yaml
 import logging
 import json
 import warnings
 import subprocess
+import re
+
+import argparse
+import pandas as pd
+import yaml
 
 logger = logging.getLogger('GCF-configmaker')
 logger.setLevel(logging.WARNING)
@@ -71,7 +73,8 @@ def _match_project_dir(pth, project_id=None):
             if os.path.isdir(os.path.join(pth, fn)) and fn in project_id:
                 return os.path.join(pth, fn), fn
         msg = "{0} is not present in run_folder: {1}".format(project_id, pth)
-        raise ValueError(msg)
+        logger.warning(msg)
+        return None, None
     else:
         project_dir = None
         for fn in os.listdir(pth):
@@ -84,9 +87,6 @@ def _match_project_dir(pth, project_id=None):
             return project_dir, project_id
         raise ValueError('failed to identify any valid projects in runfolder: {}'.format(pth))
 
-def _match_samplesheet(pth):
-    matches = glob.glob(os.path.join(pth, '*SampleSheet*.csv'))
-    return matches
 
 def inspect_samplesheet(samplesheet, runfolders):
     """
@@ -98,15 +98,17 @@ def inspect_samplesheet(samplesheet, runfolders):
     else:
         samplesheets = []
         for pth in runfolders:
-            ss = _match_samplesheet(pth)
-            for s in ss:
-                samplesheets.append(s)
-        if len(samplesheets) == 0:
-            msg = "Cannot find SampleSheet.csv in {}".format(', '.join(runfolders))
-            raise RuntimeError(msg)
+            samplesheet_fn = os.path.join(pth, 'SampleSheet.csv')
+            if os.path.exists(samplesheet_fn):
+                samplesheets.append(samplesheet_fn)
+            else:
+                msg = "cannot find SampleSheet.csv in {}. Use --samplesheet for manual override".format(pth)
+                raise RuntimeError(msg)
         return samplesheets
 
 def get_data_from_samplesheet(fh):
+    """returns [data] section as dataframe and [CustomOptions] section as key-value dict
+    """
     custom_opts = False
     opts_d = {}
     while True:
@@ -120,7 +122,7 @@ def get_data_from_samplesheet(fh):
             custom_opts = True
             continue
         elif custom_opts:
-            key, val = [i.rstrip() for i in line.split(',')]
+            key, val = [i.rstrip() for i in line.split(',') if i][:2]
             if val.lower() == 'true':
                 val = True
             opts_d[key] = val
@@ -128,19 +130,22 @@ def get_data_from_samplesheet(fh):
 def get_project_samples_from_samplesheet(samplesheet, runfolders, project_id):
     """
     Return a dataframe containing project samples
+
+    !! Assuming CustomOptions are equal between all samplesheets
     """
     ss = inspect_samplesheet(samplesheet, runfolders)
-    df_list = []
-    for sheet in ss:
-        with open(sheet, 'r') as s:
-            data, opts = get_data_from_samplesheet(s)
-            df_list.append(data)
-    df = pd.concat(df_list)
+    samples_dataframe_list = []
+    for samplesheet_i in inspect_samplesheet(samplesheet, runfolders):
+        with open(samplesheet_i, 'r') as fh:
+            data, opts = get_data_from_samplesheet(fh)
+            samples_dataframe_list.append(data)
+    df = pd.concat(samples_dataframe_list)
     if project_id:
+        # subset samples on project id
         df = df[df.Sample_Project.isin(project_id)]
     df['Sample_ID'] = df['Sample_ID'].astype(str)
-    df = df[['Sample_ID']]
-    df = df.drop_duplicates(['Sample_ID'])
+    df = df[['Sample_ID', 'Sample_Project']]
+    df.columns = ['Sample_ID', 'Project_ID']
     return df, opts
 
 def inspect_dirs(runfolders, project_id=None):
@@ -148,11 +153,14 @@ def inspect_dirs(runfolders, project_id=None):
     project_ids = set()
     for pth in runfolders:
         pdir, pid = _match_project_dir(pth, project_id)
-        project_dirs.append(pdir)
-        project_ids.add(pid)
+        if pid:
+            project_dirs.append(pdir)
+            project_ids.add(pid)
     if len(project_ids) == 0:
         raise ValueError('runfolders does not contain any of the specified projects.')
-    return project_dirs, list(project_ids)
+    project_ids = list(set(project_ids))
+    project_dirs = list(set(project_dirs))
+    return project_dirs, project_ids
 
 def match_fastq(sample_name, project_dir, rel_path=True):
     """Return fastq files matching a sample name.
@@ -195,13 +203,14 @@ def find_samples(df, project_dirs):
             warn_str = 'removing sample {} from SampleSheet due to missing fastq files!'.format(row.Sample_ID)
             warnings.warn(warn_str)
         else:
-            pe = 0 if len(s_r2) == 0 else 1
-            sample_dict[str(row.Sample_ID)] = {
-                'R1': ','.join(s_r1),
-                'R2': ','.join(s_r2),
-                'paired_end': pe,
-                'Sample_ID': row.Sample_ID,
-            }
+            project_id = [os.path.basename(os.path.split(i)[0]) for i in s_r1]
+            if len(set(project_id)) == 1:
+                project_id = set(project_id)
+            project_id = ','.join(project_id)
+            sample_dict[str(row.Sample_ID)] = {'R1': ','.join(s_r1),
+                                               'R2': ','.join(s_r2),
+                                               'Project_ID': project_id,
+                                               'Sample_ID': row.Sample_ID}
     return sample_dict
 
 
@@ -214,17 +223,15 @@ def find_samples_batch(df, project_dirs):
                 warn_str = 'sample {} not found in {}'.format(row.Sample_ID, p_pth)
                 warnings.warn(warn_str)
             else:
-                pe = 0 if not r2 else 1
                 r2 = [] if not r2 else r2
-                sample_dict[str(row.Sample_ID) + "_" + os.path.split(p_pth)[-2].split("_")[-1]] = {
-                    'R1': ','.join(r1),
-                    'R2': ','.join(r2),
-                    'paired_end': pe,
-                    'Sample_ID': str(row.Sample_ID) + "_" + os.path.split(p_pth)[-2].split("_")[-1],
-                    'Src_Sample_ID': row.Sample_ID,
-                }
+                Flowcell_ID = os.path.split(p_pth)[-2].split("_")[-1]
+                Sample_ID = '{}_{}'.format(row.Sample_ID, Flowcell_ID)
+                sample_dict[Sample_ID] = {'R1': ','.join(r1),
+                                          'R2': ','.join(r2),
+                                          'Project_ID': row.Project_ID,
+                                          'Sample_ID': Sample_ID,
+                                          'Src_Sample_ID': row.Sample_ID}
     return sample_dict
-
 
 
 def sample_submission_form_parser(ssub_path, keep_batch=None):
@@ -241,8 +248,11 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
                   ('Sample biosource', 'Sample_Biosource'),
                   ('Project', 'Project_ID'),
                   ('Sample type', 'Sample_Type'),
+                  ('Sample Type', 'Sample_Type'),
                   ('Index2', 'Index2'),
                   ('Index1', 'Index1'),
+                  ('Sequence1', 'Index_Sequence1'),
+                  ('Sequence2', 'Index_Sequence2'),
                   ('Plate', 'Plate'),
                   ('Sample buffer', 'Sample_Buffer'),
                   ('Sample Buffer', 'Sample_Buffer'),
@@ -275,8 +285,9 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
                   ('SpikeIn', 'SpikeIn'),
                   ('Fragment_Length', 'Fragment_Length'),
                   ('Fragment_SD', 'Fragment_SD'),
-                  ('Sample Name', 'Sample Name'),
-                  ('KIT', 'KIT')
+                  ('Sample_Name', 'Lab_Sample_Name'),
+                  ('KIT', 'KIT'),
+                  ('ERCC', 'ERCC')
                   ]
         for src, dst in starts:
             if x.startswith(src):
@@ -294,9 +305,7 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
     remove_cols = ['Concentration', 'Index', 'Index2', 'Sample_Type', 'Plate', 'Sample_Buffer', 'Volume', 'Quantification_Method', 'Concentration', '260/280', '260/230']
     remove_cols = list(set(customer.columns).intersection(remove_cols))
     customer = customer.drop(remove_cols, axis=1)
-    # drop columns with all NaN or empty string
     customer = customer.dropna(axis='columns', how='all')
-    #customer = customer.loc[:,(customer == '').sum(0) < customer.shape[0]]
     
     lab = pd.read_excel(ssub_path, sheet_name=2, dtype={'Sample_ID': str})
     lab = lab.rename(columns=lab_mapper)
@@ -310,15 +319,15 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
         shared_cols.remove('Sample_ID')
     customer = customer.drop(shared_cols, axis=1)
 
-    flowcell_name = os.path.basename(ssub_path)
+    flowcell_name = os.path.basename(os.path.split(ssub_path)[0])
     flowcell_id = flowcell_name.split('_')[-1]
     customer['Flowcell_Name'] = flowcell_name
     customer['Flowcell_ID'] = flowcell_id
+
     if keep_batch:
         customer['Sample_ID'] = customer['Sample_ID'].astype(str) + "_" + flowcell_id
-        #customer.index = customer['Sample_ID']
         lab['Sample_ID'] = lab['Sample_ID'].astype(str) + "_" + flowcell_id
-        #lab.index = lab['Sample_ID']
+        
     if not lab.empty:
         merge_ssub = pd.merge(customer, lab, on='Sample_ID', how='inner')
     else:
@@ -343,7 +352,7 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
                 # merge info from sample
                 sample = merge[sample_id]
                 for k, v in vals.items():
-                    if k == 'Flowcell_Name':
+                    if k in ['Flowcell_Name', 'Flowcell_ID', 'Project_ID']:
                         # special case flowcell name to multiple values by comma sep 
                         v = ','.join([sample[k], v])
                     elif sample[k] == v or (pd.isnull(v) and pd.isnull(sample[k])):
@@ -351,20 +360,22 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
                         pass
                     else:
                         # unequal info in submission forms and we are not looking at flowcell
+                        
                         logger.warning("WARNING: Sampleinfo ({}) on {} are updated with values from {}/Sample-Submission-Form.xlsx. Specify a custom sample submission form with --sample-submission-form to force values.".format(v, k, pth))
                     sample[k] = v
                 merge[sample_id] = sample
-            
     merge = pd.DataFrame.from_dict(merge, orient='index')
     check_existence_of_samples(sample_dict.keys(), merge)
     sample_df = pd.DataFrame.from_dict(sample_dict, orient='index')
+    if 'Project_ID' in sample_df.columns and 'Project_ID' in merge:
+        merge = merge.drop('Project_ID', axis=1)
     sample_df = sample_df.merge(merge, on='Sample_ID', how='left')
     sample_df.reset_index()
     sample_df.index = sample_df['Sample_ID']
     sample_df.fillna('', inplace=True)
     if new_project_id:
-        sample_df.rename(columns={'Project_ID': 'Src_Project_ID'}, inplace=True)
-        sample_df.insert(loc=0, column="Project_ID", value=[new_project_id]*len(sample_df))
+        sample_df = sample_df.rename(columns={'Project_ID': 'Src_Project_ID'})
+        sample_df['Project_ID'] = new_project_id
     s_dict = sample_df.to_dict(orient='index')
     return s_dict
 
@@ -404,7 +415,8 @@ def find_machine(runfolders):
 
 def create_default_config(sample_dict, opts, args, fastq_dir=None):
     config = {}
-
+    if len(args.project_id) == 1:
+        args.project_id = args.project_id[0]
     if args.new_project_id:
          config['project_id'] = args.new_project_id
          config['src_project_id'] = args.project_id
@@ -454,17 +466,18 @@ if __name__ == '__main__':
     parser.add_argument("--machine",  help="Sequencer model.")
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     parser.add_argument("--create-project", action='store_true', help="Pull analysis pipeline and snakemake file based on libkit")
-    parser.add_argument("--create-peppy", action='store_true', help="Create a peppy project config file and samples/subsamples tsv files")
+    parser.add_argument("--skip-peppy", action='store_true', help="Skip creation of a peppy project")
     parser.add_argument("--keep-batch", action='store_true', help="Sample names will be made unique for each batch.")
 
     args = parser.parse_args()
 
     project_dirs, args.project_id = inspect_dirs(args.runfolders, args.project_id)
-    s_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
+    
+    samples_df, opts = get_project_samples_from_samplesheet(args.samplesheet, args.runfolders, args.project_id)
     if args.keep_batch:
-        sample_dict = find_samples_batch(s_df, project_dirs)
+        sample_dict = find_samples_batch(samples_df, project_dirs)
     else:
-        sample_dict = find_samples(s_df, project_dirs)
+        sample_dict = find_samples(samples_df, project_dirs)
 
     ssub_d = dict()
     if args.ssub is None:
@@ -561,7 +574,7 @@ if __name__ == '__main__':
             sn.write(SNAKEFILE_TEMPLATE.format(workflow=workflow))
 
 
-    if args.create_peppy:
+    if not args.skip_peppy:
         import peppy_support
         peppy_support.create_peppy(config, output_dir='peppy_project')
     
