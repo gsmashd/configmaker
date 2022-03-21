@@ -5,16 +5,21 @@ http://pep.databio.org/
 import os
 import yaml
 import itertools
+import re
 
 #import peppy
 import pandas as pd
 
 
 def config_info(config):
+    single_cell = False
     subsamples = False
     multiple_projects = False
     multiple_flowcells = False
+    
     for sample_id, sample_conf in config['samples'].items():
+        if 'L00' in sample_conf.get('R1', ''):
+            single_cell = True
         if ',' in sample_conf.get('R1', ''):
             subsamples = True
         if ',' in sample_conf.get('R2', ''):
@@ -23,7 +28,7 @@ def config_info(config):
             multiple_projects = True
         if ',' in sample_conf.get('Flowcell_ID', ''):
             multiple_flowcells = True
-    return {'subsamples': subsamples, 'multiple_projects':multiple_projects, 'multiple_flowcells': multiple_flowcells}
+    return {'subsamples': subsamples, 'multiple_projects':multiple_projects, 'multiple_flowcells': multiple_flowcells, 'single_cell':single_cell}
 
 def _empty_col(col):
     if all(col==''):
@@ -51,7 +56,6 @@ def conifg2sampletable(config, info, drop_empty_cols=True):
         if info['multiple_projects']:
             drop_cols.append('Project_ID')
         if drop_cols:
-            print(drop_cols)
             df = df.drop(drop_cols, axis=1, errors='ignore')
     
     if 'R1' in df.columns:
@@ -83,6 +87,13 @@ def config2subsampletable(config, info):
                 subsamples[subsample_name]['Flowcell_Name'] = fc
             if info['multiple_projects']:
                 subsamples[subsample_name]['Project_ID'] = pid
+            if info['single_cell']:
+                patt = re.compile('(.*)\/(GCF-\d{4}-\d{3})\/(.*)\/.*_(S\d)_(L00\d)_R[1-2]_001.fastq.gz')
+                m = patt.match(r1)
+                if m:
+                    _fc, _pid, _sample_id, run_id, lane = m.groups()
+                subsamples[subsample_name]['lane'] = lane
+                subsamples[subsample_name]['run_number'] = run_id
     if len(subsamples) > 0:
         df = pd.DataFrame.from_dict(subsamples, orient='index')
         df = df.set_index('sample_name').reset_index()
@@ -120,8 +131,13 @@ def peppy_project_dict(config, info):
     derive = {}
     derive['attributes'] = ['R1', 'R2']
     sources = {}
-    sources['R1'] = '{Flowcell_Name}/{Project_ID}/{sample_name}_R1.fastq.gz'
-    sources['R2'] = '{Flowcell_Name}/{Project_ID}/{sample_name}_R2.fastq.gz'
+    if info['single_cell']:
+        # bcl2fastq without --no-lane-splitting
+        sources['R1'] = '{Flowcell_Name}/{Project_ID}/{sample_name}/{sample_name}_{run_number}_{lane}_R1_001.fastq.gz'
+        sources['R2'] = '{Flowcell_Name}/{Project_ID}/{sample_name}/{sample_name}_{run_number}_{lane}_R1_001.fastq.gz'
+    else:
+        sources['R1'] = '{Flowcell_Name}/{Project_ID}/{sample_name}_R1.fastq.gz'
+        sources['R2'] = '{Flowcell_Name}/{Project_ID}/{sample_name}_R2.fastq.gz'
     derive['sources'] = sources
     peppy_project['sample_modifiers'] = {}
     peppy_project['sample_modifiers']['derive'] = derive
