@@ -159,6 +159,6 @@ def create_peppy(config, output_dir='peppy_project'):
     sampletable.to_csv(os.path.join(peppy_dir, 'sample_table.csv'), index=None)
     if info['subsamples']:
         subsampletable.to_csv(os.path.join(peppy_dir, 'subsample_table.csv'), index=None)
-    with open(os.path.join(peppy_dir, 'project_config.yaml'), 'w') as fh:
+    with open(os.path.join(peppy_dir, 'pep_config.yaml'), 'w') as fh:
         yaml.dump(peppy_conf, fh)    
         
