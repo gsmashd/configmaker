@@ -41,6 +41,12 @@ include:
 
 """
 
+def uniq_list():
+    """ list of uniq values order is preserved"""
+    out = []
+    [out.append(i) for i in seq if not out.count(i)]
+    return out
+
 class FullPaths(argparse.Action):
     """Expand user- and relative-paths"""
     def __call__(self, parser, namespace, values, option_string=None):
@@ -67,7 +73,8 @@ def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
         raise argparse.ArgumentTypeError(msg)
 
 def _match_project_dir(pth, project_id=None):
-
+    """returns path and folder (project_id) of a project
+    """
     if project_id:
         for fn in os.listdir(pth):
             if os.path.isdir(os.path.join(pth, fn)) and fn in project_id:
@@ -87,6 +94,19 @@ def _match_project_dir(pth, project_id=None):
             return project_dir, project_id
         raise ValueError('failed to identify any valid projects in runfolder: {}'.format(pth))
 
+def inspect_dirs(runfolders, project_id=None):
+    """returns *list* of runfolders and project_ids. skips runfolders with no project_id
+    """
+    project_dirs = []
+    project_ids = []
+    for pth in runfolders:
+        pdir, pid = _match_project_dir(pth, project_id)
+        if pid:
+            project_dirs.append(pdir)
+            project_ids.append(pid)
+    if len(project_ids) == 0:
+        raise ValueError('runfolders does not contain any of the specified projects.')
+    return project_dirs, project_ids
 
 def inspect_samplesheet(samplesheet, runfolders):
     """
@@ -146,21 +166,8 @@ def get_project_samples_from_samplesheet(samplesheet, runfolders, project_id):
     df['Sample_ID'] = df['Sample_ID'].astype(str)
     df = df[['Sample_ID', 'Sample_Project']]
     df.columns = ['Sample_ID', 'Project_ID']
+    df['Project_ID'] = [[i] for i in df['Project_ID']] # store project-ids as list
     return df, opts
-
-def inspect_dirs(runfolders, project_id=None):
-    project_dirs = []
-    project_ids = set()
-    for pth in runfolders:
-        pdir, pid = _match_project_dir(pth, project_id)
-        if pid:
-            project_dirs.append(pdir)
-            project_ids.add(pid)
-    if len(project_ids) == 0:
-        raise ValueError('runfolders does not contain any of the specified projects.')
-    project_ids = list(set(project_ids))
-    project_dirs = list(set(project_dirs))
-    return project_dirs, project_ids
 
 def match_fastq(sample_name, project_dir, rel_path=True):
     """Return fastq files matching a sample name.
@@ -203,13 +210,9 @@ def find_samples(df, project_dirs):
             warn_str = 'removing sample {} from SampleSheet due to missing fastq files!'.format(row.Sample_ID)
             warnings.warn(warn_str)
         else:
-            project_id = [os.path.basename(os.path.split(i)[0]) for i in s_r1]
-            if len(set(project_id)) == 1:
-                project_id = set(project_id)
-            project_id = ','.join(project_id)
             sample_dict[str(row.Sample_ID)] = {'R1': ','.join(s_r1),
                                                'R2': ','.join(s_r2),
-                                               'Project_ID': project_id,
+                                               'Project_ID': ','.join(row.Project_ID),
                                                'Sample_ID': row.Sample_ID}
     return sample_dict
 
@@ -228,7 +231,7 @@ def find_samples_batch(df, project_dirs):
                 Sample_ID = '{}_{}'.format(row.Sample_ID, Flowcell_ID)
                 sample_dict[Sample_ID] = {'R1': ','.join(r1),
                                           'R2': ','.join(r2),
-                                          'Project_ID': row.Project_ID,
+                                          'Project_ID': ','.join(row.Project_ID),
                                           'Sample_ID': Sample_ID,
                                           'Src_Sample_ID': row.Sample_ID}
     return sample_dict
@@ -368,6 +371,7 @@ def merge_samples_with_submission_form(ssub, sample_dict, new_project_id=None, k
     check_existence_of_samples(sample_dict.keys(), merge)
     sample_df = pd.DataFrame.from_dict(sample_dict, orient='index')
     if 'Project_ID' in sample_df.columns and 'Project_ID' in merge:
+        # use Project_ID from sample_dict over sample-submission-form
         merge = merge.drop('Project_ID', axis=1)
     sample_df = sample_df.merge(merge, on='Sample_ID', how='left')
     sample_df.reset_index()
@@ -389,7 +393,7 @@ def check_existence_of_samples(samples, df):
     return None
 
 def find_read_geometry(runfolders):
-    all = set()
+    n_matches = set()
     for fn in runfolders:
         stats_fn = os.path.join(fn, 'Stats', 'Stats.json')
         read_geometry = []
@@ -397,26 +401,29 @@ def find_read_geometry(runfolders):
             S = json.load(fh)
         for read in S['ReadInfosForLanes'][0]['ReadInfos']:
             if not read['IsIndexedRead']:
-                read_geometry.append(read['NumCycles'])
-        all.add(':'.join(map(str, read_geometry)))
-    if len(all) > 1:
+                n_cycles = int(read['NumCycles'])
+                read_geometry.append(n_cycles)
+        n_matches.add(','.join(map(str, read_geometry)))
+    if len(n_matches) > 1:
         raise ValueError('Read geometry mismatch between runfolders. Check Stats.json!')
     return read_geometry
 
 def find_machine(runfolders):
-    matches = set()
+    n_matches = set()
     for pth in runfolders:
         machine_code = os.path.basename(pth).split('_')[1]
         machine = SEQUENCERS.get(machine_code, '')
-        matches.add(machine)
-    if len(matches) > 1:
-        logger.warning('Multiple sequencing machines identified!')
-    return '|'.join(list(matches))
+        n_matches.add(machine)
+    if len(n_matches) > 1:
+        #logger.warning('Multiple sequencing machines identified!')
+        raise ValueError('Multiple sequencing machines identified!')
+    return machine
 
 def create_default_config(sample_dict, opts, args, fastq_dir=None):
     config = {}
-    if len(args.project_id) == 1:
-        args.project_id = args.project_id[0]
+    if len(set(args.project_id)) == 1:
+        args.project_id = [args.project_id[0]]
+    
     if args.new_project_id:
          config['project_id'] = args.new_project_id
          config['src_project_id'] = args.project_id
@@ -478,7 +485,7 @@ if __name__ == '__main__':
         sample_dict = find_samples_batch(samples_df, project_dirs)
     else:
         sample_dict = find_samples(samples_df, project_dirs)
-
+    
     ssub_d = dict()
     if args.ssub is None:
         for pth in args.runfolders:
@@ -565,7 +572,7 @@ if __name__ == '__main__':
         libkit = config['libprepkit'] + (" PE" if len(config['read_geometry']) > 1 else " SE")
         kitconf = libconf.get(libkit, None)
         if not kitconf:
-            print("Libprepkit {} is not defined in libprep.config. Running with default settings.".format(libkit))
+            logger.warning("Libprepkit {} is not defined in libprep.config. Running with default settings.".format(libkit))
             workflow = "default"
         else:
             workflow = kitconf["workflow"]
