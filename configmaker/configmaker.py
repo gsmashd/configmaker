@@ -33,6 +33,8 @@ GCF_WORKFLOWS_SRC = "https://github.com/gcfntnu/gcf-workflows.git"
 SNAKEFILE_TEMPLATE = """
 from snakemake.utils import validate, min_version
 
+pepfile:
+    'pep/pep_config.yaml'
 configfile:
     'config.yaml'
 
@@ -576,6 +578,6 @@ if __name__ == '__main__':
 
     if not args.skip_peppy:
         import peppy_support
-        peppy_support.create_peppy(config, output_dir='peppy_project')
+        peppy_support.create_peppy(config, output_dir='pep')
     
 
