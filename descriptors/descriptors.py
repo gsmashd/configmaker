@@ -43,12 +43,10 @@ from descriptors import fuzzmatch
 
 logger = logging.getLogger('GCF-configmaker')
 
-DEFAULT_DESCRIPTORS = {}
+#DEFAULT_DESCRIPTORS = {}
 desc_fn = os.path.join(os.path.dirname(__file__), "default_descriptors.yaml")
-if os.path.exists(desc_fn):
-    with open(desc_fn) as fh:
-       DEFAULT_DESCRIPTORS  = yaml.load(fh, Loader=yaml.FullLoader)
-
+with open(desc_fn) as fh:
+    DEFAULT_DESCRIPTORS  = yaml.load(fh, Loader=yaml.FullLoader)
 
 def findall_header_descriptors(df, strip_descriptors=True, mapper=None):
     """
