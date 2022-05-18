@@ -311,7 +311,6 @@ def _customer_column_mapper(x):
         if x.startswith(src):
             return dst
     # unknown header value (may be customer added)
-    desc = 
     src_sanitized = x.title()
     remove = """- ? ( ) [ ] / \ = + < > : ; " ' , * ^ | & .""".split()
     for r in remove:
