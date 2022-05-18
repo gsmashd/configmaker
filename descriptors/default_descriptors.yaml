@@ -1,0 +1,189 @@
+Sample_ID:
+  display_name: 'Sample ID'
+  dtype: string
+  subtype: no_conversion
+  description: unique sample id
+  placement: 0
+Lab_Sample_Name:
+  display_name: 'GCF-lab Sample ID'
+  dtype: string
+  subtype: no_conversion
+  description: internal lab sample id
+  placement: 1
+External_ID:
+  display_name: 'External ID'
+  dtype: string
+  subtype: no_conversion
+  description: secondary id mapped to Sample_ID
+  placement: 2
+Concentration:
+  display_name: Concentration
+  dtype: numerical
+  subtype: float
+  description: sample concentration
+  min: 0
+  suffix: "ng/\u03BCl"
+  placement: 25
+Project_ID:
+  display_name: 'GCF Project ID'
+  dtype: string
+  subtype: gcf_number
+  description: GCF project ID. (GCF-year-number)
+  placement: 4
+Comment:
+  display_name: Comment
+  dtype: string
+  description: comment
+  placement: 30
+Sample_Type:
+  display_name: 'Sample Type'
+  dtype: categorical
+  subtype: enum
+  enum: [DNA, RNA]
+  placement: 8
+Sequence1:
+  display_name: 'Index1 sequence'
+  dtype: nucleotide_sequence
+  description: 'nucleotide sequence of index 1 (P7)'
+  placement: 70
+Sequence2:
+  display_name: 'Index2 sequence'
+  dtype: nucleotide_sequence
+  description: 'nucleotide sequence of index 2 (P5)'
+  placement: 71
+Index1:
+  display_name: 'Index1 name'
+  dtype: string
+  description: 'unique name for index 1 (P7)'
+  placement: 72
+Index2:
+  display_name: 'Index2 name'
+  dtype: string
+  description: 'unique name for index 2 (P5)'
+  placement: 73
+Plate:
+  display_name: 'Plate position'
+  dtype: categorical
+  description: 'plate well name'
+  placement: 5
+  ref_level: A0
+Volume:
+  display_name: 'Sample Volume'
+  dtype: numerical
+  subtype: float
+  min: 0
+  suffix: "\u03BCl"
+  description: 'sample volume in \u03BCl'
+  placement: 50
+Quantification:
+  dtype: string
+  description: quantification method
+  placement: 51
+260/280:
+  display_name: '260-280 ratio'
+  dtype: numerical
+  subtype: float
+  description: presence of protein and or phenol in the isolated nucleic acid sample
+  min: 0
+  mean: 2
+  var: 0.5
+  placement: 21
+260/230:
+  display_name: '260-230 ratio'
+  dtype: numerical
+  subtype: float
+  description: the presence of unwanted organic compounds such as Trizol, phenol, Guanidine HCL and guanidine thiocyanate.
+  min: 0
+  mean: 2
+  var: 0.5
+  placement: 22
+Organism:
+  display_name: Organism
+  dtype: string
+  subtype: organism
+  description: organism name (genus_species)
+  placement: 6
+RIN:
+  display_name: RIN
+  description: RNA Integrity Number
+  dtype: numerical
+  subtype: float
+  max: 10
+  min: 0
+  mean: 7
+  var: 1
+  placement: 20
+SpikeIn:
+  display_name: 'Spike In'
+  dtype: string
+  description: Spike in type
+  placement: 98
+Fragment_Length:
+  display_name: 'Insert Length'
+  dtype: numerical
+  subtype: int
+  description: length of insert/fragment without adapters/primers
+  min: 0
+  placement: 80
+Fragment_SD:
+  display_name: 'Fragment Standard Deviation'
+  dtype: numerical
+  subtype: int
+  description: standard deviation of insert/fragment without adapters/primers
+  min: 0
+  placment: 81
+ERCC:
+  display_name: ERCC
+  dtype: boolean
+  display_name: ercc added to sample (deprecated)
+  description: presence of ercc spike-in sequences
+  placement: 99
+Flowcell_Name:
+  display_name: 'Flowcell Name'
+  description: flowcell folder name
+  dtype: string
+  subtype: no_conversion
+  placement: 35
+Flowcell_ID:
+  display_name: 'Flowcell ID'
+  description: flowcell id tag
+  dtype: categorical
+  placement: 36
+Sample_Group:
+  display_name: 'Sample Group'
+  dtype: categorical
+  subtype: experimental_value
+  description: main experimental variable
+  placement: 12
+Sample_Biosource:
+  display_name: 'Sample Biosource'
+  dtype: categorical
+  placement: 10
+  description: biological source material
+R1:
+  display_name: 'Read 1'
+  dtype: path
+  description: ' read 1 fastq filename'
+  placement: 1000
+R2:
+  display_name: 'Read 2'
+  dtype: path
+  description: 'read 2 fastq filename'
+  placement: 1001
+lane:
+  display_name: Lane
+  dtype: categorical
+  subtype: int
+  ordered: true
+  description: lane number
+  placement: 109
+run_number:
+  display_name: 'Run Number'
+  dtype: string
+  description: Flowcell internal run number
+  placement: 110
+unknown:
+  display_name: Unknown
+  description: variable with unknown descriptor
+  dtype: string
+  placement: 100

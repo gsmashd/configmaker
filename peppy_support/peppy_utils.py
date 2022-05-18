@@ -3,12 +3,16 @@ http://pep.databio.org/
 """
 
 import os
-import yaml
+import oyaml as yaml
 import itertools
 import re
 
 #import peppy
 import pandas as pd
+
+EXPERIMENT_VALUES = ['Sample_Group']
+CHARACTERISTICS = ['Sample_Biosource', 'Concentration', '260/280', '260/280', 'RIN']
+LAB_VALUES = ['External_ID', 'Submitted_Comments', 'Project_ID', 'Sample_Type', 'Index1', 'Index2', 'Sequence1', 'Sequence2']
 
 
 def config_info(config):
@@ -92,6 +96,9 @@ def config2subsampletable(config, info):
                 m = patt.match(r1)
                 if m:
                     _fc, _pid, _sample_id, run_id, lane = m.groups()
+                else:
+                    print(r1)
+                    sys.exit()
                 subsamples[subsample_name]['lane'] = lane
                 subsamples[subsample_name]['run_number'] = run_id
     if len(subsamples) > 0:
@@ -105,14 +112,16 @@ def config2experimentinfo(config):
     """extract global experiment/data info
     """
     exp_dict = {}
-    exp_params =  ['project_id', 'src_project_id', 'organism', 'machine', 'read_geometry']
-    libprep_params = ['adapter', 'adapter2', 'read_orientation', 'workflow', 'libprep_name', 'delta_readlen']
+    exp_params =  ['project_id', 'src_project_id', 'organism', 'workflow', 'machine', 'read_geometry']
+    libprep_params = ['adapter', 'adapter2', 'read_orientation', 'libprepkit', 'delta_readlen']
     for k in exp_params:
         if k in config:
             exp_dict[k] = config[k]
     for n in libprep_params:
         if n in config:
             exp_dict[n] = config[n]
+    if 'descriptors' in config:
+        exp_dict['descriptors'] = config['descriptors']
     return exp_dict
         
 
@@ -125,6 +134,8 @@ def peppy_project_dict(config, info):
     peppy_project['sample_table'] = 'sample_table.csv'
     global_params = config2experimentinfo(config)
     peppy_project.update(global_params)
+
+    peppy_project
     
     if info['subsamples']:
         peppy_project['subsample_table'] = 'subsample_table.csv'
@@ -159,6 +170,6 @@ def create_peppy(config, output_dir='peppy_project'):
     sampletable.to_csv(os.path.join(peppy_dir, 'sample_table.csv'), index=None)
     if info['subsamples']:
         subsampletable.to_csv(os.path.join(peppy_dir, 'subsample_table.csv'), index=None)
-    with open(os.path.join(peppy_dir, 'project_config.yaml'), 'w') as fh:
+    with open(os.path.join(peppy_dir, 'pep_config.yaml'), 'w') as fh:
         yaml.dump(peppy_conf, fh)    
         
