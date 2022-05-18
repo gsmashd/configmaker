@@ -20,4 +20,5 @@ setup(
     packages=['configmaker', 'testdata', 'peppy_support', 'descriptors'],
     install_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'thefuzz', 'six', 'requests'],
     setup_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'thefuzz', 'six', 'requests'],
+    package_data={"": ["*.yaml", "*.pkl"]},
 )
