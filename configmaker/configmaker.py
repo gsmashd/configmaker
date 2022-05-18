@@ -21,11 +21,11 @@ import pandas as pd
 import oyaml as yaml
 
 # enable local imports in script
-path_root = Path(__file__).parents[0]
-sys.path.append(str(path_root))
+#path_root = Path(__file__).parents[0]
+#sys.path.append(str(path_root))
 
-import gcf_descriptors as descriptors
-import gcf_fuzzmatch as fuzzmatch
+import descriptors 
+
 
 
 SEQUENCERS = {
@@ -89,7 +89,7 @@ def is_valid_gcf_id(arg, patt='GCF-\d{4}-\d{3}'):
         msg = "{0} is not a valid GCF number (format: GCF-YYYY-NNN)".format(arg)
         raise argparse.ArgumentTypeError(msg)
 
-def _match_project_dir(pth, project_id=None):
+def _match_project_dir(pth, project_id=None, test=False):
     """
     returns path and folder (project_id) of a project
     """
@@ -102,13 +102,16 @@ def _match_project_dir(pth, project_id=None):
         return None, None
     else:
         project_dir = None
+        
         for fn in os.listdir(pth):
-            if os.path.isdir(os.path.join(pth, fn)) and re.match('GCF-\d{4}-\d{3}', fn):
+            
+            if os.path.isdir(os.path.join(pth, fn)) and re.match('^GCF-\d{4}-\d{3}', fn):
                 if project_dir is not None:
-                    logger.error('runfolders contain more than one project folders. Use `--project-id` option to choose one.')
+                    logger.error('runfolders contain more than one project folders existing: {}, other: {}'.format(project_id, fn) )
+                    logger.error('Use `--project-id` option to choose one.')
                 project_dir = os.path.join(pth, fn)
                 project_id = fn
-            elif re.match('GCF-\d{4}-\d{3}_samplesheet.tsv', fn):
+            elif test and re.match('GCF-\d{4}-\d{3}_samplesheet.tsv', fn):
                 project_id = fn.split('_samplesheet.tsv')[0]
                 project_dir = os.path.join(pth, project_id)
         if project_dir:
@@ -349,7 +352,7 @@ def _lab_column_mapper(x):
 def read_customer_sheet(fn):
     _dtypes = {'Unique Sample ID': str, 'External ID (optional reference sample ID)': str}
     df = pd.read_excel(fn, sheet_name='Sample-Submission-Form', skiprows=14, dtype=_dtypes)
-    desc = descriptors.findall_header_descriptors(df, mapper=_customer_column_mapper) # identify any header descriptors
+    desc = descriptors.descriptors.findall_header_descriptors(df, mapper=_customer_column_mapper) # identify any header descriptors
     df = df.rename(columns=_customer_column_mapper)
     remove_cols = ['Sample_Type', 'Sample_Buffer', 'Volume', 'Quantification'] # wetlab only
     remove_cols = list(set(df.columns).intersection(remove_cols))
@@ -406,7 +409,7 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
         merged_ssub = customer
     merged_ssub["Sample_ID"] = merged_ssub["Sample_ID"].astype(str)
     merged_ssub.index = merged_ssub["Sample_ID"]
-    desc = descriptors.add_default_descriptors(merged_ssub, desc)
+    desc = descriptors.descriptors.add_default_descriptors(merged_ssub, desc)
     return merged_ssub, desc
 
 def _make_header_uniq(df):
@@ -434,7 +437,7 @@ def merge_samples_with_submission_form(sample_dict, args):
         for k, v in sub_desc.items():
             if k in desc:
                 if desc[k] != v:
-                    default_v = descriptors.DEFAULT_DESCRIPTORS.get(k)
+                    default_v = descriptors.descriptors.DEFAULT_DESCRIPTORS.get(k)
                     if desc[k] == default_v:
                         # update descriptor if is new and not default value
                         desc[k] = v
@@ -477,8 +480,8 @@ def merge_samples_with_submission_form(sample_dict, args):
         sample_df = sample_df.rename(columns={'Project_ID': 'Src_Project_ID'})
         sample_df['Project_ID'] = args.new_project_id
     
-    desc = descriptors.add_default_descriptors(sample_df, desc)
-    sample_df, desc = descriptors.infer_by_descriptor(sample_df, desc)
+    desc = descriptors.descriptors.add_default_descriptors(sample_df, desc)
+    sample_df, desc = descriptors.descriptors.infer_by_descriptor(sample_df, desc)
     if 'Organism' in sample_df.columns:
         if (len(set(sample_df.Organism.values)) == 1): # single customer org
             if args.organism is not None:
@@ -702,7 +705,7 @@ def check_input(args):
     logger.debug('running check_input ...')
     dirs, ids, samplesheets, submission_forms = [],[],[],[]
     for pth in args.runfolders:
-        project_dir, project_id = _match_project_dir(pth, args.project_id)
+        project_dir, project_id = _match_project_dir(pth, project_id=args.project_id, test=args.test)
         if project_id:
             dirs.append(project_dir)
             ids.append(project_id)
@@ -735,7 +738,7 @@ def check_input(args):
     args.project_id = ids
     args.runfolders = [os.path.dirname(p) for p in dirs]
 
-    args.organism = fuzzmatch.fuzzmatch_organism(args.organism)
+    args.organism = descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
     
     return args
             
@@ -757,7 +760,7 @@ def parse_args():
     parser.add_argument("--skip-peppy", action='store_true', help="Skip creation of a peppy project")
     parser.add_argument("--keep-batch", action='store_true', help="Sample names will be made unique for each batch.")
     parser.add_argument("--verbose", action='store_true', help="Verbose output")
-    parser.add_argument("--test", action='store_true', help="Verbose output")
+    parser.add_argument("--test", action='store_true', help="Activate test-mode. (no fastq files needed)")
 
     args = parser.parse_args()
     return args
@@ -790,7 +793,7 @@ if __name__ == '__main__':
     args = check_input(args)
     samples_df, custom_opts, header = get_project_samples_from_samplesheet(args)
     args.organism = args.organism or custom_opts.get('Organism')
-    args.organism = args.organism or fuzzmatch.fuzzmatch_organism(args.organism)
+    args.organism = args.organism or descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
         
 
     if args.test:

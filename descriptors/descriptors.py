@@ -39,7 +39,7 @@ import oyaml as yaml
 
 import pandas as pd
 
-import gcf_fuzzmatch as fuzzmatch
+from descriptors import fuzzmatch
 
 logger = logging.getLogger('GCF-configmaker')
 

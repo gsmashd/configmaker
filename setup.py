@@ -17,7 +17,7 @@ setup(
     license = "BSD",
     url = "https://github.com/gcfntnu/gcf-tools",
     scripts = ['configmaker/configmaker.py', 'testdata/create_testdata.py'],
-    packages=['configmaker', 'testdata', 'peppy_support'],
+    packages=['configmaker', 'testdata', 'peppy_support', 'descriptors'],
     install_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'thefuzz', 'six'],
     setup_requires=['pandas', 'xlrd==1.2.0', 'oyaml', 'thefuzz', 'six'],
 )
