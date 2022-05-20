@@ -286,14 +286,14 @@ def infer_by_descriptor(df, desc):
         if dtype == 'numerical':
             col = col.apply(_infer_dtype_numerical, tryhard=True, subtype=subtype, col_name=col_name)
             col = pd.to_numeric(col, errors='coerce')
-            col_min = desc.get(col_name, {}).get('min', col.min())
+            col_min = float(desc.get(col_name, {}).get('min', col.min()))
             if col_min > col.min():
                 logger.warning('decriptor min value > data min value {}>{}'.format(col_min, col.min()))
-            desc[col_name]['min'] = float(col_min)
-            col_max = desc.get(col_name, {}).get('max', col.max())
+            desc[col_name]['min'] = col_min
+            col_max = float(desc.get(col_name, {}).get('max', col.max()))
             if col_max < col.max():
                 logger.warning('decriptor max value < data max value {}<{}'.format(col_max, col.max()))
-            desc[col_name]['max'] = float(col_max)
+            desc[col_name]['max'] = col_max
             if subtype is None:
                 if col.dtype.kind == 'i':
                     subtype = 'int'

@@ -361,11 +361,12 @@ def read_customer_sheet(fn):
     df = df.dropna(axis='columns', how='all') # remove empty cols
     if not df.empty:
         df = df.convert_dtypes()
-    
+    logger.debug('customer descriptors: {}'.format(str(desc)))
     return df, desc
 
 def read_lab_sheet(fn):
     df = pd.read_excel(fn, sheet_name='INFO (GCF-lab only)', dtype={'Sample_ID': str})
+    desc = descriptors.descriptors.findall_header_descriptors(df, mapper=_lab_column_mapper)
     df = df.rename(columns=_lab_column_mapper)
     legacy_cols = list(set(['Sample_Name','KIT']).intersection(df.columns))
     df = df.drop(legacy_cols, axis=1, errors='ignore')
@@ -373,8 +374,8 @@ def read_lab_sheet(fn):
     df = df.dropna(axis='columns', how='all') # remove empty cols
     if not df.empty:
         df = df.convert_dtypes()
-    
-    return df
+    logger.debug('lab descriptors: {}'.format(str(desc)))
+    return df, desc
 
 
 def sample_submission_form_parser(ssub_path, keep_batch=None):
@@ -387,13 +388,17 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
 
     
     customer, desc = read_customer_sheet(ssub_path)
-    lab = read_lab_sheet(ssub_path)
+    lab, lab_desc = read_lab_sheet(ssub_path)
     # lab-sheet will take presedence over customer filled columns
     shared_cols = list(set(customer.columns).intersection(lab.columns))
     if 'Sample_ID' in shared_cols:
         shared_cols.remove('Sample_ID')
     customer = customer.drop(shared_cols, axis=1)
-
+    for k, v in lab_desc.items():
+        if v:
+            if k not in shared_cols and not desc.get(k):
+                logger.debug('lab descriptor: {}:{}'.format(k, v))
+                desc[k] = v
     flowcell_name = os.path.basename(os.path.split(ssub_path)[0])
     flowcell_id = flowcell_name.split('_')[-1]
     customer['Flowcell_Name'] = flowcell_name #flowcell folder name
@@ -410,6 +415,7 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
     merged_ssub["Sample_ID"] = merged_ssub["Sample_ID"].astype(str)
     merged_ssub.index = merged_ssub["Sample_ID"]
     desc = descriptors.descriptors.add_default_descriptors(merged_ssub, desc)
+ 
     return merged_ssub, desc
 
 def _make_header_uniq(df):
