@@ -63,4 +63,7 @@ jobs:
       run: |
         configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG --create-fastq-dir --create-project
         rm -rf *
-        
+    - name configmaker may use header descriptors in submission-form
+      working-directory: tmp
+      run: |
+        configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG --sample-submission-form ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG/test_descriptor_headers.xlsx
