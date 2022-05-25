@@ -27,7 +27,6 @@ import oyaml as yaml
 import descriptors 
 
 
-
 SEQUENCERS = {
     'NB501038' : 'NextSeq 500',
     'SN7001334' : 'HiSeq 2500',
@@ -51,6 +50,28 @@ include:
     'src/gcf-workflows/{workflow}/{workflow}.smk'
 
 """
+
+def setup_logger(verbose=False):
+    logger = logging.getLogger('GCF-configmaker')
+    fh = logging.FileHandler('.configmaker.debug')
+    fh.setLevel(logging.DEBUG)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.WARNING)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(levelname)s %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    if verbose:
+        logger.setLevel(10)
+        ch.setLevel(10)
+        logger.debug('setting logging to debug ...')    
+    return logger
+
+logger = setup_logger()
 
 
 def uniq_list():
@@ -565,7 +586,7 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
         config['organism'] = opts['Organism']
     if args.organism is not None:
         if pd.isnull(args.organism) or args.organism in ['N/A', 'NA', '<NA>', '', None]:
-            config['organism'] = str(pd.NA)
+            config['organism'] = 'N/A'
         else:
             config['organism'] = args.organism
 
@@ -771,31 +792,12 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def setup_logger(args):
-    logger = logging.getLogger('GCF-configmaker')
-    fh = logging.FileHandler('.configmaker.debug')
-    fh.setLevel(logging.DEBUG)
-    # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.WARNING)
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter('%(levelname)s %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-    if args.verbose:
-        logger.setLevel(10)
-        ch.setLevel(10)
-        logger.debug('setting logging to debug ...')    
-    return logger
-
 
 
 if __name__ == '__main__':
     args = parse_args()
-    logger = setup_logger(args)
+    if args.verbose:
+        logger = setup_logger(verbose=True)
     args = check_input(args)
     samples_df, custom_opts, header = get_project_samples_from_samplesheet(args)
     args.organism = args.organism or custom_opts.get('Organism')
