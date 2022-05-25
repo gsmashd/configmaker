@@ -183,7 +183,6 @@ run_number:
   description: Flowcell internal run number
   placement: 110
 unknown:
-  display_name: Unknown
   description: variable with unknown descriptor
   dtype: string
   placement: 100
