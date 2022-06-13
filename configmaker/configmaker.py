@@ -483,7 +483,7 @@ def merge_samples_with_submission_form(sample_dict, args):
                     if k in ['Flowcell_Name', 'Flowcell_ID', 'Project_ID']:
                         # special case flowcell name to multiple values by comma sep 
                         v = ','.join([sample[k], v])
-                    elif sample[k] == v or (pd.isnull(v) and pd.isnull(sample[k])):
+                    elif (pd.isnull(v) and pd.isnull(sample[k])) or (sample[k] == v):
                         # equal info between submission forms
                         pass
                     else:
