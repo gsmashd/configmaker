@@ -161,6 +161,8 @@ def _infer_dtype_string(x, subtype=None, col_name=None):
     x = str(x).strip()
     if subtype == 'no_conversion':
         return x
+    elif subtype == 'organism':
+        return x
     elif subtype == 'gcf_number':
         m = re.match('GCF-\d{4}-\d{3}', x)
         if m:
