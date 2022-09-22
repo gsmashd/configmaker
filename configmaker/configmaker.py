@@ -590,8 +590,9 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     
     if 'Organism' in opts: # if org in samplesheet
         config['organism'] = opts['Organism']
+    if pd.isnull(config.get('organism')) or config.get('organism') in ['N/A', 'NA', '<NA>', '', None]:
+        config['organism'] = 'N/A'
     
-            
     if 'Libprep' in opts:
         config['libprepkit'] = opts['Libprep']
     if args.libkit is not None:
