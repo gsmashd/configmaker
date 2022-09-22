@@ -582,14 +582,16 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     else:
          config['project_id'] = args.project_id
 
-    if 'Organism' in opts:
-        config['organism'] = opts['Organism']
     if args.organism is not None:
         if pd.isnull(args.organism) or args.organism in ['N/A', 'NA', '<NA>', '', None]:
             config['organism'] = 'N/A'
         else:
             config['organism'] = args.organism
-
+    
+    if 'Organism' in opts: # if org in samplesheet
+        config['organism'] = opts['Organism']
+    
+            
     if 'Libprep' in opts:
         config['libprepkit'] = opts['Libprep']
     if args.libkit is not None:
@@ -598,6 +600,14 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     config['read_geometry'] = find_read_geometry(args.runfolders)
     config['machine'] = args.machine or find_machine(args.runfolders)
 
+    if args.PI is not None:
+        config['experiment_principal_inverstigator'] = args.PI
+    if args.contributor is not None:
+        config['experiment_contributor'] = args.contributor
+    if args.title is not None:
+        config['experiment_title'] = args.title
+    if args.summary is not None:
+        config['experiment_summary'] = args.summary
     batch = {}
     if args.keep_batch:
         batch['name'] = 'Flowcell_ID'
@@ -782,6 +792,10 @@ def parse_args():
     parser.add_argument("--organism",  help="Organism (if applicable to all samples). Overrides value from samplesheet.")
     parser.add_argument("--libkit",  help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet.")
     parser.add_argument("--machine",  help="Sequencer model.")
+    parser.add_argument("--PI",  help="Name of Principal Inverstigator (data deposition)")
+    parser.add_argument("--contributor",  help="Name of acting inverstigator (data deposition)")
+    parser.add_argument("--title",  help="Experiment title (data deposition)")
+    parser.add_argument("--summary",  help="Experiment summary (data deposition)")
     parser.add_argument("--create-fastq-dir", action='store_true', help="Create fastq dir and symlink fastq files")
     parser.add_argument("--create-project", action='store_true', help="Pull analysis pipeline and snakemake file based on libkit")
     parser.add_argument("--skip-peppy", action='store_true', help="Skip creation of a peppy project")

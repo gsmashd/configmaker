@@ -113,11 +113,15 @@ def config2experimentinfo(config):
     """
     exp_dict = {}
     exp_params =  ['project_id', 'src_project_id', 'organism', 'workflow', 'machine', 'read_geometry']
-    libprep_params = ['adapter', 'adapter2', 'read_orientation', 'libprepkit', 'delta_readlen']
+    libprep_params = ['adapter', 'adapter2', 'read_orientation', 'libprepkit', 'delta_readlen', 'molecule', 'library_strategy', 'library_selection', '']
+    study_params = ['experiment_title', 'experiment_summary', 'experiment_principal_inverstigator', 'experiment_contributor']
     for k in exp_params:
         if k in config:
             exp_dict[k] = config[k]
     for n in libprep_params:
+        if n in config:
+            exp_dict[n] = config[n]
+    for n in study_params:
         if n in config:
             exp_dict[n] = config[n]
     if 'descriptors' in config:
