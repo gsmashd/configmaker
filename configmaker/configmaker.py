@@ -33,7 +33,8 @@ SEQUENCERS = {
     'K00251' : 'HiSeq 4000',
     'M02675' : 'MiSeq NTNU',
     'M03942' : 'MiSeq StOlav',
-    'M05617' : 'MiSeq SINTEF'
+    'M05617' : 'MiSeq SINTEF',
+    'A01990' : 'NovaSeq 6000'
 }
 
 GCF_WORKFLOWS_SRC = "https://github.com/gcfntnu/gcf-workflows.git"
