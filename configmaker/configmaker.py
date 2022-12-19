@@ -580,8 +580,6 @@ def merge_samples_with_submission_form(sample_dict, args):
     merge = pd.DataFrame.from_dict(merge, orient="index")
     check_existence_of_samples(sample_dict.keys(), merge)
     sample_df = pd.DataFrame.from_dict(sample_dict, orient="index")
-    logger.info(sample_df.head())
-    logger.info(merge.head())
     if "Project_ID" in sample_df.columns and "Project_ID" in merge:
         # use Project_ID from samplesheet over sample-submission-form
         merge = merge.drop("Project_ID", axis=1)
@@ -620,6 +618,8 @@ def check_existence_of_samples(samples, df):
                 vals
             )
         )
+        raise ValueError
+
     diff2 = list(set(df["Sample_ID"].astype(str)) - set(samples))
     if diff2:
         extra = ""
