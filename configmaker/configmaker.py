@@ -265,6 +265,18 @@ def match_fastq(sample_name, project_dir, rel_path=True):
                     )
                 )
             )
+        elif re.match(sample_name + "_S\d+_L\d{3}_R1_001.fastq.gz", fn):
+            r1_fastq_files.append(
+                os.path.join(
+                    project_dir, os.path.basename(fn)
+                )
+            )
+        elif re.match(sample_name + "_S\d+_L\d{3}_R2_001.fastq.gz", fn):
+            r2_fastq_files.append(
+                os.path.join(
+                    project_dir, os.path.basename(fn)
+                )
+            )
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
         warn_msg = "Failed to match sample: {} with any fastq files in {}".format(
             sample_name, project_dir

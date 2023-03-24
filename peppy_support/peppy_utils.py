@@ -6,6 +6,7 @@ import os
 import oyaml as yaml
 import itertools
 import re
+import sys
 
 #import peppy
 import pandas as pd
@@ -92,13 +93,12 @@ def config2subsampletable(config, info):
             if info['multiple_projects']:
                 subsamples[subsample_name]['Project_ID'] = pid
             if info['single_cell']:
-                patt = re.compile('(.*)\/(GCF-\d{4}-\d{3})\/(.*)\/.*_(S\d)_(L00\d)_R[1-2]_001.fastq.gz')
-                m = patt.match(r1)
+                m = re.match('(.*)\/(GCF-\d{4}-\d{3})\/(.*)\/.*_(S\d+)_(L00\d)_R[1-2]_001.fastq.gz', r1)
                 if m:
                     _fc, _pid, _sample_id, run_id, lane = m.groups()
                 else:
-                    print(r1)
-                    sys.exit()
+                    m = re.match('(.*)\/(GCF-\d{4}-\d{3})\/(.*)_(S\d+)_(L00\d)_R[1-2]_001.fastq.gz', r1)
+                    _fc, _pid, _sample_id, run_id, lane = m.groups()
                 subsamples[subsample_name]['lane'] = lane
                 subsamples[subsample_name]['run_number'] = run_id
     if len(subsamples) > 0:
