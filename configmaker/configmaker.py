@@ -700,16 +700,10 @@ def create_default_config(
         else:
             config["organism"] = args.organism
 
-    if "Organism" in opts:  # if org in samplesheet
-        config["organism"] = opts["Organism"]
-    if pd.isnull(config.get("organism")) or config.get("organism") in [
-        "N/A",
-        "NA",
-        "<NA>",
-        "",
-        None,
-    ]:
-        config["organism"] = "N/A"
+    if args.subsample:
+        config["filter"] = {"subsample_fastq": args.subsample}
+    else:
+        config["filter"] = {"subsample_fastq": "skip"}
 
     if "Libprep" in opts:
         config["libprepkit"] = opts["Libprep"]
@@ -925,6 +919,21 @@ def check_input(args):
     return args
 
 
+def subsample_input_type(arg):
+    if not arg:
+        return None
+    try:
+        s = float(arg)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Subsample must be a number")
+    if s <= 0:
+        raise argparse.ArgumentTypeError("Subsample must be > 0")
+    elif s == 1:
+        s = None
+    elif s > 1:
+        s = int(s)
+    return s
+
 def parse_args():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -971,6 +980,12 @@ def parse_args():
         dest="ssub",
         type=argparse.FileType("r"),
         help="GCF Sample Submission Form",
+    )
+    parser.add_argument(
+        "--subsample",
+        type=subsample_input_type,
+        default=None,
+        help="Subsample fastq. Float between 0 and 1 for fraction, int > 1 for number of reads.",
     )
     parser.add_argument(
         "--organism",
