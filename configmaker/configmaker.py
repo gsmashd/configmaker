@@ -237,6 +237,14 @@ def get_project_samples_from_samplesheet(args):
     df = df.convert_dtypes()
     return df, opts, header
 
+def subset_samples(args, samples_df):
+    sdf = pd.read_csv(args.samples, index_col=0, header=None, sep='\t')
+    if len(sdf) == 0:
+        raise ValueError("No samples to subset. Format one sample per line.")
+    samples_df = samples_df[samples_df.Sample_ID.isin(sdf.index)]
+    if len(samples_df) == 0:
+        raise ValueError("No overlap between samples to subset and samples in samplesheet.")
+    return samples_df
 
 def match_fastq(sample_name, project_dir, rel_path=True):
     """
@@ -982,6 +990,12 @@ def parse_args():
         help="GCF Sample Submission Form",
     )
     parser.add_argument(
+        "--samples",
+        dest="samples",
+        type=argparse.FileType("r"),
+        help="File with list of samples to use",
+    )
+    parser.add_argument(
         "--subsample",
         type=subsample_input_type,
         default=None,
@@ -1039,6 +1053,8 @@ if __name__ == "__main__":
         logger = setup_logger(verbose=True)
     args = check_input(args)
     samples_df, custom_opts, header = get_project_samples_from_samplesheet(args)
+    if args.samples:
+        samples_df = subset_samples(args, samples_df)
     args.organism = args.organism or custom_opts.get("Organism")
     args.organism = args.organism or descriptors.fuzzmatch.fuzzmatch_organism(
         args.organism
