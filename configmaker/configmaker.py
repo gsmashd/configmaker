@@ -133,17 +133,11 @@ def _match_project_dir(pth, project_id=None, test=False):
         project_dir = None
 
         for fn in os.listdir(pth):
-
-            if os.path.isdir(os.path.join(pth, fn)) and re.match(
-                "^GCF-\d{4}-\d{3}", fn
-            ):
+            if os.path.isdir(os.path.join(pth, fn)) and re.match("^GCF-\d{4}-\d{3}", fn):
                 if project_dir is not None:
-                    logger.error(
-                        "runfolders contain more than one project folders existing: {}, other: {}".format(
-                            project_id, fn
-                        )
-                    )
-                    logger.error("Use `--project-id` option to choose one.")
+                    msg = "runfolders contain more than one project folders existing: {}, other: {}"
+                    msg += "\nuse `--project-id` option to choose one."
+                    logger.error(msg.format(project_id, fn))
                 project_dir = os.path.join(pth, fn)
                 project_id = fn
             elif test and re.match("GCF-\d{4}-\d{3}_samplesheet.tsv", fn):
@@ -155,6 +149,7 @@ def _match_project_dir(pth, project_id=None, test=False):
         raise RuntimeError(
             "failed to identify any valid projects in runfolder: {}".format(pth)
         )
+
 
 
 def get_data_from_samplesheet(fh):
@@ -237,14 +232,6 @@ def get_project_samples_from_samplesheet(args):
     df = df.convert_dtypes()
     return df, opts, header
 
-def subset_samples(args, samples_df):
-    sdf = pd.read_csv(args.samples, index_col=0, header=None, sep='\t')
-    if len(sdf) == 0:
-        raise ValueError("No samples to subset. Format one sample per line.")
-    samples_df = samples_df[samples_df.Sample_ID.isin(sdf.index)]
-    if len(samples_df) == 0:
-        raise ValueError("No overlap between samples to subset and samples in samplesheet.")
-    return samples_df
 
 def match_fastq(sample_name, project_dir, rel_path=True):
     """
@@ -274,17 +261,14 @@ def match_fastq(sample_name, project_dir, rel_path=True):
                 )
             )
         elif re.match(sample_name + "_S\d+_L\d{3}_R1_001.fastq.gz", fn):
-            r1_fastq_files.append(
-                os.path.join(
-                    project_dir, os.path.basename(fn)
-                )
-            )
+            r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
         elif re.match(sample_name + "_S\d+_L\d{3}_R2_001.fastq.gz", fn):
-            r2_fastq_files.append(
-                os.path.join(
-                    project_dir, os.path.basename(fn)
-                )
-            )
+            r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
+        elif re.match(sample_name + "_S\d+_R1_001.fastq.gz", fn):
+            r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
+        elif re.match(sample_name + "_S\d+_R2_001.fastq.gz", fn):
+            r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
+            
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
         warn_msg = "Failed to match sample: {} with any fastq files in {}".format(
             sample_name, project_dir
@@ -455,13 +439,9 @@ def _lab_column_mapper(x):
 
 
 def read_customer_sheet(fn):
-    _dtypes = {
-        "Unique Sample ID": str,
-        "External ID (optional reference sample ID)": str,
-    }
-    df = pd.read_excel(
-        fn, sheet_name="Sample-Submission-Form", skiprows=14, dtype=_dtypes
-    )
+    _dtypes = {"Unique Sample ID": str,
+               "External ID (optional reference sample ID)": str,}
+    df = pd.read_excel(fn, sheet_name="Sample-Submission-Form", skiprows=14, dtype=_dtypes)
     desc = descriptors.descriptors.findall_header_descriptors(
         df, mapper=_customer_column_mapper
     )  # identify any header descriptors
@@ -484,9 +464,7 @@ def read_customer_sheet(fn):
 
 def read_lab_sheet(fn):
     df = pd.read_excel(fn, sheet_name="INFO (GCF-lab only)", dtype={"Sample_ID": str})
-    desc = descriptors.descriptors.findall_header_descriptors(
-        df, mapper=_lab_column_mapper
-    )
+    desc = descriptors.descriptors.findall_header_descriptors(df, mapper=_lab_column_mapper)
     df = df.rename(columns=_lab_column_mapper)
     legacy_cols = list(set(["Sample_Name", "KIT"]).intersection(df.columns))
     df = df.drop(legacy_cols, axis=1, errors="ignore")
@@ -555,9 +533,7 @@ def merge_samples_with_submission_form(sample_dict, args):
     """
     submission_forms, desc = {}, {}
     for submission_form in args.ssub:
-        ssub, sub_desc = sample_submission_form_parser(
-            submission_form, keep_batch=args.keep_batch
-        )
+        ssub, sub_desc = sample_submission_form_parser(submission_form, keep_batch=args.keep_batch)
         pth = os.path.abspath(submission_form)
         if len(set(ssub.columns)) != len(ssub.columns):
             ssub = _make_header_uniq(ssub)
@@ -619,7 +595,10 @@ def merge_samples_with_submission_form(sample_dict, args):
                 sample_df["Organism"] = args.organism
             else:
                 # if org is N/A in samplesheet but single org in sample_df
-                args.organism = list(sample_df.Organism)[0]
+                #args.organism = list(sample_df.Organism)[0]
+                customer_org = list(sample_df.Organism)[0]
+                logger.warning("Organism is N/A in samplesheet with customer Organsim columns has one value: {}\n....keeping N/A".format(customer_org))
+                
     return sample_df, desc
 
 
@@ -632,12 +611,8 @@ def check_existence_of_samples(samples, df):
             diff = diff[:10]
             extra = ",... +{} samples".format(n_diff - 10)
         vals = ",".join(list(diff)) + extra
-
-        logger.error(
-            "Samples {} are contained in SampleSheet, but not in sample submission form. Sample info from these samples will have empty values.".format(
-                vals
-            )
-        )
+        msg = "Samples {} are contained in SampleSheet, but not in sample submission form. Sample info from these samples will have empty values."
+        logger.error(msg.format(vals))
         raise ValueError
 
     diff2 = list(set(df["Sample_ID"].astype(str)) - set(samples))
@@ -648,11 +623,8 @@ def check_existence_of_samples(samples, df):
             diff2 = diff2[:10]
             extra = ",... +{} samples".format(n_diff2 - 10)
         vals2 = ",".join(list(diff2)) + extra
-        logger.warning(
-            "Samples {} are contained in sample submission form, but not in SampleSheet. Sample info from these samples are omitted.".format(
-                vals2
-            )
-        )
+        msg = "Samples {} are contained in sample submission form, but not in SampleSheet. Sample info from these samples are omitted."
+        logger.warning(msg.format(vals2))
     return None
 
 
@@ -685,9 +657,7 @@ def find_machine(runfolders):
     return machine
 
 
-def create_default_config(
-    merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=True
-):
+def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False):
     """
     create configuration dictionary
     """
@@ -811,9 +781,10 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
     return default_fastq_dir
 
 
-def create_project(config, src_dir=None):
-    """
-    create GCF project structure
+
+
+def add_workflow(config, src_dir=None):
+    """download snakemake workflow for libprep specific workflow
     """
     src_dir = src_dir or "src"
     wf_path = os.path.join(src_dir, "gcf-workflows")
@@ -825,26 +796,28 @@ def create_project(config, src_dir=None):
     with open(os.path.join(wf_path, "libprep.config"), "r") as libprepconf_fh:
         libconf = yaml.load(libprepconf_fh, Loader=yaml.FullLoader)
 
-    libkit = config["libprepkit"] + (
-        " PE" if len(config["read_geometry"]) > 1 else " SE"
-    )
+    libkit = config["libprepkit"] + (" PE" if len(config["read_geometry"]) > 1 else " SE")
     kitconf = libconf.get(libkit, None)
     if not kitconf:
-        logger.warning(
-            "Libprepkit {} is not defined in libprep.config. Running with default settings.".format(
-                libkit
-            )
-        )
+        logger.warning("Libprepkit {} is not defined in libprep.config. Running with default settings.".format(libkit))
         workflow = "default"
+        kitconf = libconf["default"]
     else:
         workflow = kitconf["workflow"]
 
+    reference_db = kitconf.get('db', {}).get('reference_db')
+    if reference_db:
+        if 'db' not in config:
+            config['db'] = {}
+        config['db']['reference_db'] = reference_db
+        
     if not "workflow" in config:
         config["workflow"] = workflow
 
     with open("Snakefile", "w") as sn:
         sn.write(SNAKEFILE_TEMPLATE.format(workflow=workflow))
 
+    return config
 
 def project_summary(config):
     """
@@ -883,9 +856,7 @@ def check_input(args):
     logger.debug("running check_input ...")
     dirs, ids, samplesheets, submission_forms = [], [], [], []
     for pth in args.runfolders:
-        project_dir, project_id = _match_project_dir(
-            pth, project_id=args.project_id, test=args.test
-        )
+        project_dir, project_id = _match_project_dir(pth, project_id=args.project_id, test=args.test)
         if project_id:
             dirs.append(project_dir)
             ids.append(project_id)
@@ -899,11 +870,7 @@ def check_input(args):
                 submission_forms.append(ssub_fn)
 
     if args.samplesheet is not None:
-        logger.debug(
-            "overriding samplesheet with command line arg: {}".format(
-                args.samplesheet.name
-            )
-        )
+        logger.debug("overriding samplesheet with command line arg: {}".format(args.samplesheet.name))
         args.samplesheet = [args.samplesheet.name]
     else:
         if len(samplesheets) == 0:
@@ -922,9 +889,15 @@ def check_input(args):
     args.project_id = ids
     args.runfolders = [os.path.dirname(p) for p in dirs]
 
-    args.organism = descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
+    #args.organism = descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
 
     return args
+
+def check_organism_and_reference_db(config):
+    import reference_db
+    org = str(config.get('organism', '')).strip().replace(" ", "_")
+    config['organism'] = reference_db.check_organism()
+    return config
 
 
 def subsample_input_type(arg):
@@ -943,9 +916,7 @@ def subsample_input_type(arg):
     return s
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         "-p",
         "--project-id",
@@ -988,12 +959,6 @@ def parse_args():
         dest="ssub",
         type=argparse.FileType("r"),
         help="GCF Sample Submission Form",
-    )
-    parser.add_argument(
-        "--samples",
-        dest="samples",
-        type=argparse.FileType("r"),
-        help="File with list of samples to use",
     )
     parser.add_argument(
         "--subsample",
@@ -1053,12 +1018,8 @@ if __name__ == "__main__":
         logger = setup_logger(verbose=True)
     args = check_input(args)
     samples_df, custom_opts, header = get_project_samples_from_samplesheet(args)
-    if args.samples:
-        samples_df = subset_samples(args, samples_df)
     args.organism = args.organism or custom_opts.get("Organism")
-    args.organism = args.organism or descriptors.fuzzmatch.fuzzmatch_organism(
-        args.organism
-    )
+    args.organism = args.organism or descriptors.fuzzmatch.fuzzmatch_organism(args.organism)
 
     if args.test:
         sample_dict = find_samples_test(samples_df, args)
@@ -1070,26 +1031,28 @@ if __name__ == "__main__":
 
     merged_samples, desc = merge_samples_with_submission_form(sample_dict, args)
 
-    _ = pd.DataFrame.from_dict(desc).T
-    summary = (
-        merged_samples.dtypes.rename("pd_dtype")
-        .to_frame()
-        .merge(_, how="left", left_index=True, right_index=True)
-    )
-    print(summary.dropna(axis="columns", how="all").fillna(""))
-
     fastq_dir = create_fastq_dir(sample_dict, args)
 
-    config = create_default_config(
-        merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc
-    )
+    config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc)
 
     if args.create_project:
-        create_project(config)
+        add_workflow(config)
 
+    # validate organism scientific name and reference database before writing configfile
+    #check_organism_and_reference_db(config)
+    
+    yaml.dump(config, args.output, default_flow_style=False, tags=False)
+    
     if not args.skip_peppy:
         import peppy_support
-
         peppy_support.create_peppy(config, output_dir="pep")
+
+
+    #_ = pd.DataFrame.from_dict(desc).T
+    #summary = (merged_samples.dtypes.rename("pd_dtype")
+    #           .to_frame()
+    #           .merge(_, how="left", left_index=True, right_index=True)
+    #           )
+    #print(summary.dropna(axis="columns", how="all").fillna(""))
 
     project_summary(config)
