@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 import sys
 import os
 import re
@@ -246,20 +247,8 @@ def match_fastq(sample_name, project_dir, rel_path=True):
         elif fn == "{}_R2.fastq.gz".format(sample_name):
             r2_fastq_files.extend([os.path.join(project_dir, fn)])
         elif fn == sample_name:
-            r1_fastq_files.extend(
-                glob.glob(
-                    os.path.join(
-                        project_dir, sample_name, sample_name + "*_R1_001.fastq.gz"
-                    )
-                )
-            )
-            r2_fastq_files.extend(
-                glob.glob(
-                    os.path.join(
-                        project_dir, sample_name, sample_name + "*_R2_001.fastq.gz"
-                    )
-                )
-            )
+            r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R1_001.fastq.gz")))
+            r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R2_001.fastq.gz")))
         elif re.match(sample_name + "_S\d+_L\d{3}_R1_001.fastq.gz", fn):
             r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
         elif re.match(sample_name + "_S\d+_L\d{3}_R2_001.fastq.gz", fn):
@@ -377,10 +366,7 @@ def _customer_column_mapper(x):
         ("Project", "Project_ID"),
         ("Sample type", "Sample_Type"),
         ("Sample Type", "Sample_Type"),
-        (
-            "Index (If libraries are submitted  indicate what index sequence is used P7 )",
-            "Index1",
-        ),
+        ("Index (If libraries are submitted  indicate what index sequence is used P7 )","Index1",),
         ("Index2", "Index2"),
         ("Index1", "Index1"),
         ("Sequence1", "Index_Sequence1"),
@@ -670,7 +656,7 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
         config["project_id"] = args.new_project_id
         config["src_project_id"] = args.project_id
     else:
-        config["project_id"] = args.project_id
+        config["project_id"] = copy.deepcopy(args.project_id)
 
     if args.organism is not None:
         if pd.isnull(args.organism) or args.organism in ["N/A", "NA", "<NA>", "", None]:
@@ -697,6 +683,8 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
         config["experiment_contributor"] = args.contributor
     if args.title is not None:
         config["experiment_title"] = args.title
+    else:
+        config["experiment_title"] = config["project_id"]
     if args.summary is not None:
         config["experiment_summary"] = args.summary
     batch = {}
@@ -733,7 +721,7 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
             config["samples"][sample_id][col_name] = val
 
     if write_yaml:
-        yaml.dump(config, args.output, default_flow_style=False, tags=False)
+        yaml.safe_dump(config, args.output)
 
     return config
 
@@ -794,10 +782,10 @@ def add_workflow(config, src_dir=None):
         subprocess.check_call(cmd, shell=True)
 
     with open(os.path.join(wf_path, "libprep.config"), "r") as libprepconf_fh:
-        libconf = yaml.load(libprepconf_fh, Loader=yaml.FullLoader)
+        libconf = yaml.safe_load(libprepconf_fh)
 
     libkit = config["libprepkit"] + (" PE" if len(config["read_geometry"]) > 1 else " SE")
-    kitconf = libconf.get(libkit, None)
+    kitconf = libconf.get(libkit)
     if not kitconf:
         logger.warning("Libprepkit {} is not defined in libprep.config. Running with default settings.".format(libkit))
         workflow = "default"
@@ -814,6 +802,11 @@ def add_workflow(config, src_dir=None):
     if not "workflow" in config:
         config["workflow"] = workflow
 
+    for k, v in kitconf.items():
+        if k not in config:
+            logger.info("adding {} to conf".format(k))
+            config[k] = v
+    
     with open("Snakefile", "w") as sn:
         sn.write(SNAKEFILE_TEMPLATE.format(workflow=workflow))
 
@@ -917,96 +910,91 @@ def subsample_input_type(arg):
 
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(
-        "-p",
-        "--project-id",
-        nargs="+",
-        help="Project ID",
-        default=None,
-        type=is_valid_gcf_id,
-    )
-    parser.add_argument(
-        "-P",
-        "--new-project-id",
-        help="New Project ID",
-        default=None,
-        type=is_valid_gcf_id,
-    )
-    parser.add_argument(
-        "runfolders",
-        nargs="+",
-        help="Path(s) to flowcell dir(s)",
-        action=FullPaths,
-        type=is_dir,
-    )
-    parser.add_argument(
-        "-s",
-        "--sample-sheet",
-        dest="samplesheet",
-        type=argparse.FileType("r"),
-        help="IEM Samplesheet",
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        default="config.yaml",
-        help="Output config file",
-        type=argparse.FileType("w"),
-    )
-    parser.add_argument(
-        "-S",
-        "--sample-submission-form",
-        dest="ssub",
-        type=argparse.FileType("r"),
-        help="GCF Sample Submission Form",
-    )
-    parser.add_argument(
-        "--subsample",
-        type=subsample_input_type,
-        default=None,
-        help="Subsample fastq. Float between 0 and 1 for fraction, int > 1 for number of reads.",
-    )
-    parser.add_argument(
-        "--organism",
-        help="Organism (if applicable to all samples). Overrides value from samplesheet.",
-    )
-    parser.add_argument(
-        "--libkit",
-        help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet.",
-    )
-    parser.add_argument("--machine", help="Sequencer model.")
-    parser.add_argument(
-        "--PI", help="Name of Principal Inverstigator (data deposition)"
-    )
-    parser.add_argument(
-        "--contributor", help="Name of acting inverstigator (data deposition)"
-    )
-    parser.add_argument("--title", help="Experiment title (data deposition)")
-    parser.add_argument("--summary", help="Experiment summary (data deposition)")
-    parser.add_argument(
-        "--create-fastq-dir",
-        action="store_true",
-        help="Create fastq dir and symlink fastq files",
-    )
-    parser.add_argument(
-        "--create-project",
-        action="store_true",
-        help="Pull analysis pipeline and snakemake file based on libkit",
-    )
-    parser.add_argument(
-        "--skip-peppy", action="store_true", help="Skip creation of a peppy project"
-    )
-    parser.add_argument(
-        "--keep-batch",
-        action="store_true",
-        help="Sample names will be made unique for each batch.",
-    )
-    parser.add_argument("--verbose", action="store_true", help="Verbose output")
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        help="Activate test-mode. (no fastq files needed)",
-    )
+    parser.add_argument("-p", "--project-id",
+                        nargs="+",
+                        help="Project ID",
+                        default=None,
+                        type=is_valid_gcf_id
+                        )
+    parser.add_argument("-P","--new-project-id",
+                        help="New Project ID",
+                        default=None,
+                        type=is_valid_gcf_id,
+                        )
+    parser.add_argument("runfolders",
+                        nargs="+",
+                        help="Path(s) to flowcell dir(s)",
+                        action=FullPaths,
+                        type=is_dir,
+                        )
+    parser.add_argument("-s", "--sample-sheet",
+                        dest="samplesheet",
+                        type=argparse.FileType("r"),
+                        help="IEM Samplesheet",
+                        )
+    parser.add_argument("-o","--output",
+                        default="config.yaml",
+                        help="Output config file",
+                        type=argparse.FileType("w"),
+                        )
+    parser.add_argument("-S","--sample-submission-form",
+                        dest="ssub",
+                        type=argparse.FileType("r"),
+                        help="GCF Sample Submission Form",
+                        )
+    parser.add_argument("--subsample",
+                        type=subsample_input_type,
+                        default=None,
+                        help="Subsample fastq. Float between 0 and 1 for fraction, int > 1 for number of reads.",
+                        )
+    parser.add_argument("--organism",
+                        help="Organism (if applicable to all samples). Overrides value from samplesheet.",
+                        )
+    parser.add_argument("--libkit",
+                        help="Library preparation kit name. (if applicable for all samples). Overrides value from samplesheet."
+                        )
+    parser.add_argument("--machine",
+                        help="Sequencer model."
+                        )
+    parser.add_argument("--PI",
+                        default = "NA",
+                        help="Name of Principal Inverstigator (data deposition)"
+                        )
+    parser.add_argument("--contributor",
+                        default = None,
+                        help="Name of acting inverstigator (data deposition)"
+                        )
+    parser.add_argument("--title",
+                        default = None,
+                        help="Experiment title (data deposition)"
+                        )
+    parser.add_argument("--summary",
+                        default = "NA",
+                        help="Experiment summary (data deposition)"
+                        )
+    parser.add_argument("--create-fastq-dir",
+                        action="store_true",
+                        help="Create fastq dir and symlink fastq files",
+                        )
+    parser.add_argument("--create-project",
+                        action="store_true",
+                        help="Pull analysis pipeline and snakemake file based on libkit",
+                        )
+    parser.add_argument("--skip-peppy",
+                        action="store_true",
+                        help="Skip creation of a peppy project"
+                        )
+    parser.add_argument("--keep-batch",
+                        action="store_true",
+                        help="Sample names will be made unique for each batch.",
+                        )
+    parser.add_argument("--verbose",
+                        action="store_true", help="Verbose output"
+                        )
+    parser.add_argument("--test",
+                        action="store_true",
+                        help="Activate test-mode. (no fastq files needed)",
+                        )
 
     args = parser.parse_args()
     return args
@@ -1040,8 +1028,8 @@ if __name__ == "__main__":
 
     # validate organism scientific name and reference database before writing configfile
     #check_organism_and_reference_db(config)
-    
-    yaml.dump(config, args.output, default_flow_style=False, tags=False)
+
+    yaml.safe_dump(config, args.output)
     
     if not args.skip_peppy:
         import peppy_support
