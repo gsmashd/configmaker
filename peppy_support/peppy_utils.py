@@ -11,9 +11,29 @@ import sys
 #import peppy
 import pandas as pd
 
-EXPERIMENT_VALUES = ['Sample_Group']
-CHARACTERISTICS = ['Sample_Biosource', 'Concentration', '260/280', '260/280', 'RIN']
-LAB_VALUES = ['External_ID', 'Submitted_Comments', 'Project_ID', 'Sample_Type', 'Index1', 'Index2', 'Sequence1', 'Sequence2']
+BASE = ['project_id',
+        'src_project_id',
+        'organism']
+
+RUN =  ['workflow',
+        'machine',
+        'read_geometry']
+
+LIBPREP = ['adapter',
+           'adapter2',
+           'read_orientation',
+           'libprepkit',
+           'molecule',
+           'library_strategy',
+           'library_selection',
+           'library_source',
+           'library_strand']
+
+STUDY = ['experiment_title',
+         'experiment_summary',
+         'experiment_principal_inverstigator',
+         'experiment_contributor']
+
 
 
 def config_info(config):
@@ -112,20 +132,22 @@ def config2experimentinfo(config):
     """extract global experiment/data info
     """
     exp_dict = {}
-    exp_params =  ['project_id', 'src_project_id', 'organism', 'workflow', 'machine', 'read_geometry']
-    libprep_params = ['adapter', 'adapter2', 'read_orientation', 'libprepkit', 'delta_readlen', 'molecule', 'library_strategy', 'library_selection', '']
-    study_params = ['experiment_title', 'experiment_summary', 'experiment_principal_inverstigator', 'experiment_contributor']
-    for k in exp_params:
+    for k in BASE:
         if k in config:
             exp_dict[k] = config[k]
-    for n in libprep_params:
+    for n in STUDY:
+        if n in config:
+            exp_dict[n] = config[n]        
+    for k in RUN:
+        if k in config:
+            exp_dict[k] = config[k]
+    for n in LIBPREP:
         if n in config:
             exp_dict[n] = config[n]
-    for n in study_params:
-        if n in config:
-            exp_dict[n] = config[n]
-    if 'descriptors' in config:
-        exp_dict['descriptors'] = config['descriptors']
+    
+    exp_dict['protocol'] = config.get('protocol', {})
+    exp_dict['descriptors'] = config.get('descriptors', {})
+    
     return exp_dict
         
 
@@ -138,8 +160,6 @@ def peppy_project_dict(config, info):
     peppy_project['sample_table'] = 'sample_table.csv'
     global_params = config2experimentinfo(config)
     peppy_project.update(global_params)
-
-    peppy_project
     
     if info['subsamples']:
         peppy_project['subsample_table'] = 'subsample_table.csv'
@@ -175,5 +195,5 @@ def create_peppy(config, output_dir='peppy_project'):
     if info['subsamples']:
         subsampletable.to_csv(os.path.join(peppy_dir, 'subsample_table.csv'), index=None)
     with open(os.path.join(peppy_dir, 'pep_config.yaml'), 'w') as fh:
-        yaml.dump(peppy_conf, fh)    
+        yaml.safe_dump(peppy_conf, fh)    
         
