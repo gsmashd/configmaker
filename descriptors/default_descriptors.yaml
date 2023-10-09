@@ -170,6 +170,11 @@ R2:
   dtype: path
   description: 'read 2 fastq filename'
   placement: 1001
+I1:
+  display_name: 'Index Read 1'
+  dtype: path
+  description: 'index read 1 fastq filename'
+  placement: 1002
 lane:
   display_name: Lane
   dtype: categorical
