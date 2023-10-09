@@ -240,43 +240,46 @@ def match_fastq(sample_name, project_dir, rel_path=True):
 
     Returns paths relative to project directory
     """
-    r1_fastq_files, r2_fastq_files = [], []
+    r1_fastq_files, r2_fastq_files, i1_fastq_files = [], [], []
     for fn in os.listdir(project_dir):
         if fn == "{}_R1.fastq.gz".format(sample_name):
             r1_fastq_files.extend([os.path.join(project_dir, fn)])
         elif fn == "{}_R2.fastq.gz".format(sample_name):
             r2_fastq_files.extend([os.path.join(project_dir, fn)])
+        elif fn == "{}_I1.fastq.gz".format(sample_name):
+            i1_fastq_files.extend([os.path.join(project_dir, fn)])
         elif fn == sample_name:
             r1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R1_001.fastq.gz")))
             r2_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_R2_001.fastq.gz")))
+            i1_fastq_files.extend(glob.glob(os.path.join(project_dir, sample_name, sample_name + "*_I1_001.fastq.gz")))
         elif re.match(sample_name + "_S\d+_L\d{3}_R1_001.fastq.gz", fn):
             r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
         elif re.match(sample_name + "_S\d+_L\d{3}_R2_001.fastq.gz", fn):
             r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
+        elif re.match(sample_name + "_S\d+_L\d{3}_I1_001.fastq.gz", fn):
+            i1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
         elif re.match(sample_name + "_S\d+_R1_001.fastq.gz", fn):
             r1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
         elif re.match(sample_name + "_S\d+_R2_001.fastq.gz", fn):
             r2_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
+        elif re.match(sample_name + "_S\d+_I1_001.fastq.gz", fn):
+            i1_fastq_files.append(os.path.join(project_dir, os.path.basename(fn)))
             
     if (len(r1_fastq_files) == 0) and (len(r2_fastq_files) == 0):
-        warn_msg = "Failed to match sample: {} with any fastq files in {}".format(
-            sample_name, project_dir
-        )
+        warn_msg = "Failed to match sample: {} with any fastq files in {}".format(sample_name, project_dir)
         logger.warning(warn_msg)
-        return None, None
+        return None, None, None
+    
     r1_fastq_files = sorted(r1_fastq_files)
     r2_fastq_files = sorted(r2_fastq_files)
+    i1_fastq_files = sorted(i1_fastq_files)
     if rel_path:
-        r1_fastq_files = [
-            os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir)))
-            for x in r1_fastq_files
-        ]
-        r2_fastq_files = [
-            os.path.relpath(x, os.path.dirname(os.path.dirname(project_dir)))
-            for x in r2_fastq_files
-        ]
+        upstream_pth = os.path.dirname(os.path.dirname(project_dir))
+        r1_fastq_files = [os.path.relpath(x, upstream_pth) for x in r1_fastq_files]
+        r2_fastq_files = [os.path.relpath(x, upstream_pth) for x in r2_fastq_files]
+        i1_fastq_files = [os.path.relpath(x, upstream_pth) for x in i1_fastq_files]
 
-    return r1_fastq_files, r2_fastq_files
+    return r1_fastq_files, r2_fastq_files, i1_fastq_files
 
 
 def find_samples(df, args):
@@ -289,26 +292,36 @@ def find_samples(df, args):
         for run_folder, project_id in zip(args.runfolders, args.project_id)
     ]
     for index, row in df.iterrows():
-        s_r1 = []
-        s_r2 = []
+        s_r1, s_r2, s_i1 = [],[],[]
         for p_pth in project_dirs:
-            r1, r2 = match_fastq(row.Sample_ID, p_pth)
-            if r1 is not None:
+            r1, r2, i1 = match_fastq(row.Sample_ID, p_pth)
+            if r1:
                 s_r1.extend(r1)
-            if r2 is not None:
+            if r2:
                 s_r2.extend(r2)
+            if i1:
+                s_i1.extend(i1)
         if all([i is None for i in s_r1]) and all([i is None for i in s_r2]):
-            warn_str = "removing sample {} from SampleSheet due to missing fastq files!".format(
-                row.Sample_ID
-            )
+            warn_str = "removing sample {} from SampleSheet due to missing fastq files!".format(row.Sample_ID)
             logger.warning(warn_str)
         else:
-            sample_dict[str(row.Sample_ID)] = {
-                "R1": ",".join(s_r1),
-                "R2": ",".join(s_r2),
-                "Project_ID": ",".join(row.Project_ID),
-                "Sample_ID": row.Sample_ID,
-            }
+            if len(s_i1) > 0:
+                sample = {
+                    "R1": ",".join(s_r1),
+                    "R2": ",".join(s_r2),
+                    "I1": ",".join(s_i1),
+                    "Project_ID": ",".join(row.Project_ID),
+                    "Sample_ID": row.Sample_ID,
+                }
+            else:
+                sample = {
+                    "R1": ",".join(s_r1),
+                    "R2": ",".join(s_r2),
+                    "Project_ID": ",".join(row.Project_ID),
+                    "Sample_ID": row.Sample_ID,
+                }
+            sample_dict[str(row.Sample_ID)] = sample
+            
     return sample_dict
 
 
@@ -323,7 +336,7 @@ def find_samples_batch(df, project_dirs):
     ]
     for index, row in df.iterrows():
         for p_pth in project_dirs:
-            r1, r2 = match_fastq(row.Sample_ID, p_pth)
+            r1, r2, i1 = match_fastq(row.Sample_ID, p_pth)
             if (not r1) and (not r2):
                 warn_str = "sample {} not found in {}".format(row.Sample_ID, p_pth)
                 logger.warning(warn_str)
@@ -331,13 +344,23 @@ def find_samples_batch(df, project_dirs):
                 r2 = [] if not r2 else r2
                 Flowcell_ID = os.path.split(p_pth)[-2].split("_")[-1]
                 Sample_ID = "{}_{}".format(row.Sample_ID, Flowcell_ID)
-                sample_dict[Sample_ID] = {
-                    "R1": ",".join(r1),
-                    "R2": ",".join(r2),
-                    "Project_ID": ",".join(row.Project_ID),
-                    "Sample_ID": Sample_ID,
-                    "Src_Sample_ID": row.Sample_ID,
-                }
+                if len(i1) > 0:
+                    sample_dict[Sample_ID] = {
+                        "R1": ",".join(r1),
+                        "R2": ",".join(r2),
+                        "I1": ",".join(i1),
+                        "Project_ID": ",".join(row.Project_ID),
+                        "Sample_ID": Sample_ID,
+                        "Src_Sample_ID": row.Sample_ID,
+                    }
+                else:
+                    sample_dict[Sample_ID] = {
+                        "R1": ",".join(r1),
+                        "R2": ",".join(r2),
+                        "Project_ID": ",".join(row.Project_ID),
+                        "Sample_ID": Sample_ID,
+                        "Src_Sample_ID": row.Sample_ID,
+                    }
     return sample_dict
 
 
@@ -642,8 +665,24 @@ def find_machine(runfolders):
         raise ValueError("Multiple sequencing machines identified!")
     return machine
 
-
-def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False):
+def find_fastq_md5sums(runfolders):
+    df_list = []
+    for pth in runfolders:
+        os.listdir(pth)
+        fn = glob.glob(os.path.join(pth, 'md5sum_*_fastq.txt'))
+        if fn:
+            df = pd.read_table(fn[0], header=None, sep="\s+", names=['md5sum', 'filename'])
+            df['filename'] = df['filename'].apply(lambda x: os.path.split(x)[-1])
+            df = df.set_index('filename')
+            df_list.append(df)
+    if len(df_list) == 1:
+        return df_list[0].to_dict()['md5sum']
+    elif len(df_list) > 1:
+        return pd.concat(df_list).to_dict()['md5sum']
+    else:
+        return None
+        
+def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False, md5sums=None):
     """
     create configuration dictionary
     """
@@ -720,6 +759,11 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
                 val = str(val)
             config["samples"][sample_id][col_name] = val
 
+            if col_name in ["R1", "R2", "I1"] and md5sums is not None:
+                md5 = [md5sums.get(os.path.basename(i)) for i in val.split(',')]
+                if md5:
+                   config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
+
     if write_yaml:
         yaml.safe_dump(config, args.output)
 
@@ -752,8 +796,8 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
     ]
     for sample_id in s_ids:
         for pid in project_dirs:
-            r1_src, r2_src = match_fastq(sample_id, pid, rel_path=False)
-            r1_dst, r2_dst = match_fastq(sample_id, pid, rel_path=True)
+            r1_src, r2_src, i1_src = match_fastq(sample_id, pid, rel_path=False)
+            r1_dst, r2_dst, i1_dst = match_fastq(sample_id, pid, rel_path=True)
             if not any([r1_src, r1_dst, r2_src, r2_dst]):
                 continue
             for src, dst in zip(r1_src, r1_dst):
@@ -907,6 +951,7 @@ def subsample_input_type(arg):
     elif s > 1:
         s = int(s)
     return s
+ 
 
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -1018,10 +1063,11 @@ if __name__ == "__main__":
             sample_dict = find_samples(samples_df, args)
 
     merged_samples, desc = merge_samples_with_submission_form(sample_dict, args)
-
+    
     fastq_dir = create_fastq_dir(sample_dict, args)
-
-    config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc)
+    
+    md5sums = find_fastq_md5sums(args.runfolders)
+    config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc, md5sums=md5sums)
 
     if args.create_project:
         add_workflow(config)
