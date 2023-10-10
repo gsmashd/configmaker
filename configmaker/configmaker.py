@@ -729,8 +729,14 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
     batch = {}
     if args.keep_batch:
         batch["name"] = "Flowcell_ID"
+        config['multiple_flowcells'] = False
     else:
         batch["method"] = "skip"
+        if any(merged_samples.Flowcell_ID.str.contains(',')):
+            config['multiple_flowcells'] = True
+        else:
+            config['multiple_flowcells'] = False
+    
     quant = {"batch": batch}
     config["quant"] = quant
 
@@ -784,10 +790,7 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
     s_ids = sample_dict.keys()
     if args.keep_batch:
         # split out date addition postfix from sample_ids with support for sample_ids with underscore in name
-        s_ids = [
-            "_".join(n[:-1]) if len(n) > 2 else n[0]
-            for n in [e.split("_") for e in s_ids]
-        ]
+        s_ids = ["_".join(n[:-1]) if len(n) > 2 else n[0] for n in [e.split("_") for e in s_ids]]
         s_ids = list(set(s_ids))  # unique sample_ids
 
     project_dirs = [
