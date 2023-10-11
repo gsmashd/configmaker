@@ -43,7 +43,7 @@ def config_info(config):
     multiple_flowcells = False
     
     for sample_id, sample_conf in config['samples'].items():
-        if 'L00' in sample_conf.get('R1', ''):
+        if 'I1' in sample_conf:
             single_cell = True
         if ',' in sample_conf.get('R1', ''):
             subsamples = True
@@ -53,6 +53,8 @@ def config_info(config):
             multiple_projects = True
         if ',' in sample_conf.get('Flowcell_ID', ''):
             multiple_flowcells = True
+            #if len(sample_conf.get('Flowcell_ID').split(',')) == len(sample_conf.get('R1').split(',')):
+            #    subsamples = False
     return {'subsamples': subsamples, 'multiple_projects':multiple_projects, 'multiple_flowcells': multiple_flowcells, 'single_cell':single_cell}
 
 def _empty_col(col):
@@ -75,9 +77,10 @@ def conifg2sampletable(config, info, drop_empty_cols=True):
         df = df.loc[:,~empty]
         
     if info['subsamples']:
-        drop_cols = []
+        drop_cols = [i for i in df.columns if i.endswith('_md5sum')]
+        #drop_cols = []
         if info['multiple_flowcells']:
-            drop_cols = ['Flowcell_Name', 'Flowcell_ID']
+            drop_cols.extend(['Flowcell_Name', 'Flowcell_ID'])
         if info['multiple_projects']:
             drop_cols.append('Project_ID')
         if drop_cols:
@@ -87,6 +90,8 @@ def conifg2sampletable(config, info, drop_empty_cols=True):
         df['R1'] = 'R1'
     if 'R2' in df.columns:
         df['R2'] = 'R2'
+    if 'I1' in df.columns:
+        df['I1'] = 'I1'
     df = df.set_index('Sample_ID')
     df = df.reset_index()
     df = df.rename(columns={'Sample_ID': 'sample_name'})
@@ -101,13 +106,25 @@ def config2subsampletable(config, info):
         subsample = {}
         R1 = sample_conf.get('R1', '').split(',')
         R2 = sample_conf.get('R2', '').split(',')
+        I1 = sample_conf.get('I1', '').split(',')
+        R1_MD5 = sample_conf.get('R1_md5sum', '').split(',')
+        R2_MD5 = sample_conf.get('R2_md5sum', '').split(',')
+        I1_MD5 = sample_conf.get('I1_md5sum', '').split(',')
         FC = sample_conf.get('Flowcell_Name', '').split(',')
         PID = sample_conf.get('Project_ID', '').split(',')
         run_number = 0
-        for r1, r2, fc, pid in itertools.zip_longest(R1, R2, FC, PID):
+        for r1, fc, pid in itertools.zip_longest(R1, FC, PID):
             run_number += 1
             subsample_name = '{}_{}'.format(sample_id, run_number)
             subsamples[subsample_name] = {'subsample_name': subsample_name, 'sample_name': sample_id}
+            if info['subsamples']:
+                if len(R1_MD5) == len(R1): 
+                    subsamples[subsample_name]['R1_md5sum'] = R1_MD5[run_number-1]
+                if len(R2_MD5) == len(R2) and R2[0]:
+                    subsamples[subsample_name]['R2_md5sum'] = R2_MD5[run_number-1]
+                if len(I1_MD5) == len(I1) and I1[0]:
+                    subsamples[subsample_name]['I1_md5sum'] = I1_MD5[run_number-1]
+            
             if info['multiple_flowcells']:
                 subsamples[subsample_name]['Flowcell_Name'] = fc
             if info['multiple_projects']:
@@ -121,6 +138,8 @@ def config2subsampletable(config, info):
                     _fc, _pid, _sample_id, run_id, lane = m.groups()
                 subsamples[subsample_name]['lane'] = lane
                 subsamples[subsample_name]['run_number'] = run_id
+                
+            
     if len(subsamples) > 0:
         df = pd.DataFrame.from_dict(subsamples, orient='index')
         df = df.set_index('sample_name').reset_index()
@@ -169,7 +188,8 @@ def peppy_project_dict(config, info):
     if info['single_cell']:
         # bcl2fastq without --no-lane-splitting
         sources['R1'] = '{Flowcell_Name}/{Project_ID}/{sample_name}/{sample_name}_{run_number}_{lane}_R1_001.fastq.gz'
-        sources['R2'] = '{Flowcell_Name}/{Project_ID}/{sample_name}/{sample_name}_{run_number}_{lane}_R1_001.fastq.gz'
+        sources['R2'] = '{Flowcell_Name}/{Project_ID}/{sample_name}/{sample_name}_{run_number}_{lane}_R2_001.fastq.gz'
+        sources['I1'] = '{Flowcell_Name}/{Project_ID}/{sample_name}/{sample_name}_{run_number}_{lane}_I1_001.fastq.gz'
     else:
         sources['R1'] = '{Flowcell_Name}/{Project_ID}/{sample_name}_R1.fastq.gz'
         sources['R2'] = '{Flowcell_Name}/{Project_ID}/{sample_name}_R2.fastq.gz'

@@ -287,16 +287,18 @@ def find_samples(df, args):
     identify valid samples by existing fastq file names
     """
     sample_dict = {}
-    project_dirs = [
-        os.path.join(run_folder, project_id)
-        for run_folder, project_id in zip(args.runfolders, args.project_id)
-    ]
+    project_dirs = [os.path.join(run_folder, project_id) for run_folder, project_id in zip(args.runfolders, args.project_id)]
     for index, row in df.iterrows():
         s_r1, s_r2, s_i1 = [],[],[]
+        fc_name, fc_id = [],[]
         for p_pth in project_dirs:
+            flowcell_name = os.path.basename(os.path.split(p_pth)[0])
+            flowcell_id = flowcell_name.split("_")[-1]
             r1, r2, i1 = match_fastq(row.Sample_ID, p_pth)
             if r1:
                 s_r1.extend(r1)
+                fc_name.extend([flowcell_name]*len(r1))
+                fc_id.extend([flowcell_id]*len(r1))
             if r2:
                 s_r2.extend(r2)
             if i1:
@@ -306,20 +308,22 @@ def find_samples(df, args):
             logger.warning(warn_str)
         else:
             if len(s_i1) > 0:
-                sample = {
-                    "R1": ",".join(s_r1),
-                    "R2": ",".join(s_r2),
-                    "I1": ",".join(s_i1),
-                    "Project_ID": ",".join(row.Project_ID),
-                    "Sample_ID": row.Sample_ID,
-                }
+                sample = { "R1": ",".join(s_r1),
+                           "R2": ",".join(s_r2),
+                           "I1": ",".join(s_i1),
+                           "Project_ID": ",".join(row.Project_ID),
+                           "Sample_ID": row.Sample_ID,
+                           "Flowcell_Name" : ",".join(fc_name),
+                           "Flowcell_ID" : ",".join(fc_id)
+                          }
             else:
-                sample = {
-                    "R1": ",".join(s_r1),
-                    "R2": ",".join(s_r2),
-                    "Project_ID": ",".join(row.Project_ID),
-                    "Sample_ID": row.Sample_ID,
-                }
+                sample = {"R1": ",".join(s_r1),
+                          "R2": ",".join(s_r2),
+                          "Project_ID": ",".join(row.Project_ID),
+                          "Sample_ID": row.Sample_ID,
+                          "Flowcell_Name" : ",".join(fc_name),
+                          "Flowcell_ID" : ",".join(fc_id)
+                          }
             sample_dict[str(row.Sample_ID)] = sample
             
     return sample_dict
@@ -330,10 +334,7 @@ def find_samples_batch(df, project_dirs):
     `find_samples` function adding Flowcell_ID postfix to Sample_ID
     """
     sample_dict = {}
-    project_dirs = [
-        os.path.join(run_folder, project_id)
-        for run_folder, project_id in zip(args.runfolders, args.project_id)
-    ]
+    project_dirs = [os.path.join(run_folder, project_id) for run_folder, project_id in zip(args.runfolders, args.project_id)]
     for index, row in df.iterrows():
         for p_pth in project_dirs:
             r1, r2, i1 = match_fastq(row.Sample_ID, p_pth)
@@ -505,12 +506,9 @@ def sample_submission_form_parser(ssub_path, keep_batch=None):
             if k not in shared_cols and not desc.get(k):
                 logger.debug("lab descriptor: {}:{}".format(k, v))
                 desc[k] = v
-    flowcell_name = os.path.basename(os.path.split(ssub_path)[0])
-    flowcell_id = flowcell_name.split("_")[-1]
-    customer["Flowcell_Name"] = flowcell_name  # flowcell folder name
-    customer["Flowcell_ID"] = flowcell_id
 
     if keep_batch:
+        flowcell_id = os.path.split(ssub_path)[-2].split('_')[-1]
         customer["Sample_ID"] = customer["Sample_ID"].astype(str) + "_" + flowcell_id
         lab["Sample_ID"] = lab["Sample_ID"].astype(str) + "_" + flowcell_id
 
@@ -575,9 +573,7 @@ def merge_samples_with_submission_form(sample_dict, args):
                         pass
                     else:
                         # unequal info in submission forms and we are not looking at flowcell
-                        msg = "Sampleinfo ({}) at {} are updated with values from {}/Sample-Submission-Form.xlsx. ".format(
-                            v, k, pth
-                        )
+                        msg = "Sampleinfo ({}) at {} are updated with values from {}/Sample-Submission-Form.xlsx. ".format(v, k, pth)
                         msg2 = "Specify a custom sample submission form with --sample-submission-form to force values."
                         logger.warning(msg + msg2)
                     sample[k] = v
@@ -760,6 +756,7 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
         config["samples"][sample_id] = {}
         for col_name, val in col.items():
             if isinstance(val, Iterable) and not isinstance(val, six.string_types):
+                #stringify if list
                 val = list(map(str, val))
             else:
                 val = str(val)
@@ -767,8 +764,8 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
 
             if col_name in ["R1", "R2", "I1"] and md5sums is not None:
                 md5 = [md5sums.get(os.path.basename(i)) for i in val.split(',')]
-                if md5:
-                   config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
+                if md5 and val:
+                    config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
 
     if write_yaml:
         yaml.safe_dump(config, args.output)
@@ -877,19 +874,13 @@ def project_summary(config):
     with open(os.path.join(dirname, ".configmaker.log"), "w") as conflog:
         print("Summary:")
         for nf, ns in count.items():
-            line = "{} sample{} found in {} flowcell{}".format(
-                ns, "s" if ns > 1 else "", nf, "s" if nf > 1 else ""
-            )
+            line = "{} sample{} found in {} flowcell{}".format(ns, "s" if ns > 1 else "", nf, "s" if nf > 1 else "")
             print(line)
             conflog.write(line + "\n")
         conflog.write("Sample summary:\n")
         for s, f in summary.items():
             conflog.write("Sample {} found in: {}\n".format(s, ", ".join(f)))
-    print(
-        "Full sample summary log written to {}".format(
-            os.path.join(dirname, ".configmaker.log")
-        )
-    )
+    print("Full sample summary log written to {}".format(os.path.join(dirname, ".configmaker.log")))
 
 
 def check_input(args):
@@ -954,7 +945,7 @@ def subsample_input_type(arg):
     elif s > 1:
         s = int(s)
     return s
- 
+
 
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
