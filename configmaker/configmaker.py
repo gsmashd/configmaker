@@ -790,10 +790,7 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
         s_ids = ["_".join(n[:-1]) if len(n) > 2 else n[0] for n in [e.split("_") for e in s_ids]]
         s_ids = list(set(s_ids))  # unique sample_ids
 
-    project_dirs = [
-        os.path.join(run_folder, project_id)
-        for run_folder, project_id in zip(args.runfolders, args.project_id)
-    ]
+    project_dirs = [os.path.join(run_folder, project_id) for run_folder, project_id in zip(args.runfolders, args.project_id)]
     for sample_id in s_ids:
         for pid in project_dirs:
             r1_src, r2_src, i1_src = match_fastq(sample_id, pid, rel_path=False)
@@ -810,6 +807,11 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
                     dst = os.path.join(default_fastq_dir, dst)
                     os.makedirs(os.path.dirname(dst), exist_ok=True)
                     os.symlink(src, dst)
+            for src, dst in zip(i1_src, i1_dst):
+                if src is not None:
+                    dst = os.path.join(default_fastq_dir, dst)
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    os.symlink(src, dst)    
     return default_fastq_dir
 
 
