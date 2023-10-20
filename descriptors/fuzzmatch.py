@@ -47,7 +47,7 @@ def fetch_ensembl_species(ext = "/info/species?", division='EnsemblVertebrates',
                 aliases.add(genus_species)
         kv_store[name] = list(aliases)
         
-    print('found {} new species'.format(len(kv_store)))
+    logger.debug('found {} new species'.format(len(kv_store)))
     if db:
         db.update(kv_store)
         return db
@@ -59,7 +59,7 @@ if os.path.exists(ENS_ORG_DB):
         ORG_DB = pickle.load(fh)
 else:
     ORG_DB = []
-    for div in ['Vertebrates', 'Plants']:
+    for div in ['Vertebrates', 'Plants', 'Bacteria', 'Fungi']:
         ORG_DB = fetch_ensembl_species(division='Ensembl'+ div, db=ORG_DB)
     with open(ENS_ORG_DB, 'wb') as fh:
         pickle.dump(ORG_DB, fh)
