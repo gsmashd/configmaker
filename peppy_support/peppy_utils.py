@@ -50,11 +50,11 @@ def config_info(config):
         if ',' in sample_conf.get('R2', ''):
             subsamples = True
         if ',' in sample_conf.get('Project_ID', ''):
-            multiple_projects = True
+            if len(set(sample_conf['Project_ID'].split(','))) > 1: 
+                multiple_projects = True
         if ',' in sample_conf.get('Flowcell_ID', ''):
-            multiple_flowcells = True
-            #if len(sample_conf.get('Flowcell_ID').split(',')) == len(sample_conf.get('R1').split(',')):
-            #    subsamples = False
+            if len(set(sample_conf['Flowcell_ID'].split(','))) > 1: 
+                multiple_flowcells = True
     return {'subsamples': subsamples, 'multiple_projects':multiple_projects, 'multiple_flowcells': multiple_flowcells, 'single_cell':single_cell}
 
 def _empty_col(col):
@@ -78,11 +78,15 @@ def conifg2sampletable(config, info, drop_empty_cols=True):
         
     if info['subsamples']:
         drop_cols = [i for i in df.columns if i.endswith('_md5sum')]
-        #drop_cols = []
         if info['multiple_flowcells']:
             drop_cols.extend(['Flowcell_Name', 'Flowcell_ID'])
+        else:
+            df['Flowcell_Name'] = df['Flowcell_Name'].apply(lambda x: x.split(',')[0])
+            df['Flowcell_ID'] = df['Flowcell_ID'].apply(lambda x: x.split(',')[0])
         if info['multiple_projects']:
             drop_cols.append('Project_ID')
+        else:
+            df['Project_ID'] = df['Project_ID'].apply(lambda x: x.split(',')[0])
         if drop_cols:
             df = df.drop(drop_cols, axis=1, errors='ignore')
     
@@ -125,19 +129,19 @@ def config2subsampletable(config, info):
                 if len(I1_MD5) == len(I1) and I1[0]:
                     subsamples[subsample_name]['I1_md5sum'] = I1_MD5[run_number-1]
             
-            if info['multiple_flowcells']:
-                subsamples[subsample_name]['Flowcell_Name'] = fc
-            if info['multiple_projects']:
-                subsamples[subsample_name]['Project_ID'] = pid
-            if info['single_cell']:
-                m = re.match('(.*)\/(GCF-\d{4}-\d{3})\/(.*)\/.*_(S\d+)_(L00\d)_R[1-2]_001.fastq.gz', r1)
-                if m:
+                if info['multiple_flowcells']:
+                    subsamples[subsample_name]['Flowcell_Name'] = fc
+                if info['multiple_projects']:
+                    subsamples[subsample_name]['Project_ID'] = pid
+                if info['single_cell']:
+                    m = re.match('(.*)\/(GCF-\d{4}-\d{3})\/(.*)\/.*_(S\d+)_(L00\d)_R[1-2]_001.fastq.gz', r1)
+                    if m:
+                        _fc, _pid, _sample_id, run_id, lane = m.groups()
+                    else:
+                        m = re.match('(.*)\/(GCF-\d{4}-\d{3})\/(.*)_(S\d+)_(L00\d)_R[1-2]_001.fastq.gz', r1)
                     _fc, _pid, _sample_id, run_id, lane = m.groups()
-                else:
-                    m = re.match('(.*)\/(GCF-\d{4}-\d{3})\/(.*)_(S\d+)_(L00\d)_R[1-2]_001.fastq.gz', r1)
-                    _fc, _pid, _sample_id, run_id, lane = m.groups()
-                subsamples[subsample_name]['lane'] = lane
-                subsamples[subsample_name]['run_number'] = run_id
+                    subsamples[subsample_name]['lane'] = lane
+                    subsamples[subsample_name]['run_number'] = run_id
                 
             
     if len(subsamples) > 0:
@@ -166,7 +170,6 @@ def config2experimentinfo(config):
     
     exp_dict['protocol'] = config.get('protocol', {})
     exp_dict['descriptors'] = config.get('descriptors', {})
-    
     return exp_dict
         
 
@@ -183,7 +186,7 @@ def peppy_project_dict(config, info):
     if info['subsamples']:
         peppy_project['subsample_table'] = 'subsample_table.csv'
     derive = {}
-    derive['attributes'] = ['R1', 'R2']
+    derive['attributes'] = ['R1', 'R2', 'I1']
     sources = {}
     if info['single_cell']:
         # bcl2fastq without --no-lane-splitting
