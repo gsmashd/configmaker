@@ -167,11 +167,8 @@ def get_data_from_samplesheet(fh):
             msg = "No [data]-section in samplesheet {}".format(s.name)
             raise RuntimeError(msg)
         if line.startswith("[Data]"):
-            return (
-                pd.read_csv(fh, dtype={"Sample_ID": str, "Sample_Name": str}),
-                opts_d,
-                header_d,
-            )
+            return (pd.read_csv(fh, dtype={"Sample_ID": str, "Sample_Name": str}), opts_d, header_d)
+        
         elif line.startswith("[CustomOptions]"):
             custom_opts = True
             continue
@@ -777,7 +774,7 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
     """
     Symlink fastq files into project specific names and destinations
     """
-    if not args.create_fastq_dir:
+    if not args.skip_create_fastq_dir:
         return None
     default_fastq_dir = output_dir or os.path.join("data", "raw", "fastq")
     if os.path.exists(default_fastq_dir) and overwrite:
@@ -847,7 +844,7 @@ def add_workflow(config, src_dir=None):
         
     if not "workflow" in config:
         config["workflow"] = workflow
-
+    
     for k, v in kitconf.items():
         if k not in config:
             logger.info("adding {} to conf".format(k))
@@ -1013,13 +1010,9 @@ def parse_args():
                         default = "NA",
                         help="Experiment summary (data deposition)"
                         )
-    parser.add_argument("--create-fastq-dir",
+    parser.add_argument("--skip-create-fastq-dir",
                         action="store_true",
-                        help="Create fastq dir and symlink fastq files",
-                        )
-    parser.add_argument("--create-project",
-                        action="store_true",
-                        help="Pull analysis pipeline and snakemake file based on libkit",
+                        help="Skip creation of fastq dir and symlink fastq files",
                         )
     parser.add_argument("--skip-peppy",
                         action="store_true",
@@ -1065,8 +1058,8 @@ if __name__ == "__main__":
     md5sums = find_fastq_md5sums(args.runfolders)
     config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc, md5sums=md5sums)
 
-    if args.create_project:
-        add_workflow(config)
+    #if args.create_project:
+    config = add_workflow(config)
 
     # validate organism scientific name and reference database before writing configfile
     #check_organism_and_reference_db(config)
