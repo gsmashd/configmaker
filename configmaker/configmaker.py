@@ -774,7 +774,7 @@ def create_fastq_dir(sample_dict, args, output_dir=None, overwrite=True):
     """
     Symlink fastq files into project specific names and destinations
     """
-    if not args.skip_create_fastq_dir:
+    if args.skip_create_fastq_dir:
         return None
     default_fastq_dir = output_dir or os.path.join("data", "raw", "fastq")
     if os.path.exists(default_fastq_dir) and overwrite:
