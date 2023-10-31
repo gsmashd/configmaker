@@ -36,7 +36,7 @@ jobs:
     - name: configmaker can create fastq dir
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ --create-fastq-dir 
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/
         rm -rf *
     - name: configmaker can use multiple runfolders
       working-directory: tmp
@@ -51,17 +51,17 @@ jobs:
     - name: configmaker can create microbiome project
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/ --create-fastq-dir --create-project
+        configmaker.py ../.tests/configmaker/201019_M03942_0354_000000000-CVF53/
         rm -rf *
     - name: configmaker can create single-cell project
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201022_NB501038_0238_AHKWNTBGXG/ --create-fastq-dir --create-project
+        configmaker.py ../.tests/configmaker/201022_NB501038_0238_AHKWNTBGXG/
         rm -rf *
     - name: configmaker can create rna-seq project
       working-directory: tmp
       run: |
-        configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG --create-fastq-dir --create-project
+        configmaker.py ../.tests/configmaker/201109_NB501038_0241_AH2JYJBGXG
         rm -rf *
     - name: configmaker may use header descriptors in submission-form
       working-directory: tmp
