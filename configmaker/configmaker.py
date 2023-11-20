@@ -35,6 +35,7 @@ SEQUENCERS = {
     "M02675": "MiSeq NTNU",
     "M03942": "MiSeq StOlav",
     "M05617": "MiSeq SINTEF",
+    "M71102": "MiSeq MolPat",
     "A01990": "NovaSeq 6000",
 }
 
