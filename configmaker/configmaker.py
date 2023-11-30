@@ -1,4 +1,4 @@
-#!/opt/conda/bin/python3.9
+#!/usr/bin/env python
 
 import copy
 import sys
