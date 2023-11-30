@@ -671,13 +671,13 @@ def find_fastq_md5sums(runfolders, project_id):
                 df['filename'] = df['filename'].apply(lambda x: os.path.split(x)[-1])
                 df = df.set_index('filename')
                 df_list.append(df)
-    if not df_list:
-        raise FileNotFoundError("None of {} was not found".format(', '.join(fn_list)))
-    elif len(df_list) == 1:
+
+    if len(df_list) == 1:
         return df_list[0].to_dict()['md5sum']
     elif len(df_list) > 1:
         return pd.concat(df_list).to_dict()['md5sum']
     else:
+        logger.warning("None of {} was not found".format(', '.join(fn_list)))
         return None
 
 def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False, md5sums=None):
