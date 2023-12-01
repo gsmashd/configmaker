@@ -659,23 +659,27 @@ def find_machine(runfolders):
         raise ValueError("Multiple sequencing machines identified!")
     return machine
 
-def find_fastq_md5sums(runfolders):
+def find_fastq_md5sums(runfolders, project_id):
     df_list = []
+    fn_list = []
     for pth in runfolders:
-        os.listdir(pth)
-        fn = glob.glob(os.path.join(pth, 'md5sum_*_fastq.txt'))
-        if fn:
-            df = pd.read_table(fn[0], header=None, sep="\s+", names=['md5sum', 'filename'])
-            df['filename'] = df['filename'].apply(lambda x: os.path.split(x)[-1])
-            df = df.set_index('filename')
-            df_list.append(df)
+        for pid in project_id:
+            fn = os.path.join(pth, 'md5sum_{}_fastq.txt'.format(pid))
+            fn_list.append(fn)
+            if os.path.isfile(fn):
+                df = pd.read_table(fn, header=None, sep="\s+", names=['md5sum', 'filename'])
+                df['filename'] = df['filename'].apply(lambda x: os.path.split(x)[-1])
+                df = df.set_index('filename')
+                df_list.append(df)
+
     if len(df_list) == 1:
         return df_list[0].to_dict()['md5sum']
     elif len(df_list) > 1:
         return pd.concat(df_list).to_dict()['md5sum']
     else:
+        logger.warning("None of {} was not found".format(', '.join(fn_list)))
         return None
-        
+
 def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptors=None, write_yaml=False, md5sums=None):
     """
     create configuration dictionary
@@ -1056,7 +1060,7 @@ if __name__ == "__main__":
     
     fastq_dir = create_fastq_dir(sample_dict, args)
     
-    md5sums = find_fastq_md5sums(args.runfolders)
+    md5sums = find_fastq_md5sums(args.runfolders, args.project_id)
     config = create_default_config(merged_samples, custom_opts, args, fastq_dir=fastq_dir, descriptors=desc, md5sums=md5sums)
 
     #if args.create_project:
