@@ -43,7 +43,7 @@ GCF_WORKFLOWS_SRC = "https://github.com/gcfntnu/gcf-workflows.git"
 
 SNAKEFILE_TEMPLATE = """
 from snakemake.utils import validate, min_version
-from snakemake.workflow import srcdir
+from snakemake.workflow import source_path
 
 pepfile:
     'pep/pep_config.yaml'
