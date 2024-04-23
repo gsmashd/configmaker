@@ -811,9 +811,11 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
                     config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
 
     if custom_opts.get("Libprep",'').startswith("Parse Biosciences"):
-        demux_df, demux_desc = read_demux_sheet(args.ssub[0]) 
+        demux_df, demux_desc = read_demux_sheet(args.ssub[0])
 
-    config['wells'] = demux_df.to_dict(orient="index")
+        config['wells'] = {}
+        for k,v in demux_df.to_dict(orient="index").items():
+            config['wells'][v['Sample_ID']] = v
 
     if write_yaml:
         yaml.safe_dump(config, args.output)
