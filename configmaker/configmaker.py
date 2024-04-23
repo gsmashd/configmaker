@@ -446,6 +446,29 @@ def _lab_column_mapper(x):
     return "Lab_" + src_sanitized
 
 
+def _demux_column_mapper(x):
+    """
+    map headers of demux-sheet to machine friendly headers
+    """
+    starts = [
+        ("Unique", "Sample_ID"),
+        ("Wells", "Wells"),
+        ("External", "External_ID"),
+        ("Sample Group", "Sample_Group"),
+        ("Comment", "Customer_Comments"),
+    ]
+    for src, dst in starts:
+        if x.startswith(src):
+            return dst
+    # unknown header value (may be customer added)
+    src_sanitized = x.title()
+    remove = """- ? ( ) [ ] / \ = + < > : ; " ' , * ^ | & .""".split()
+    for r in remove:
+        src_sanitized = src_sanitized.replace(r, "")
+        src_sanitized = src_sanitized.replace(" ", "_")
+    return "Demux_" + src_sanitized
+
+
 def read_customer_sheet(fn):
     _dtypes = {"Unique Sample ID": str,
                "External ID (optional reference sample ID)": str,}
@@ -481,6 +504,24 @@ def read_lab_sheet(fn):
     if not df.empty:
         df = df.convert_dtypes()
     logger.debug("lab descriptors: {}".format(str(desc)))
+    return df, desc
+
+
+def read_demux_sheet(fn):
+    _dtypes = {"Unique Sample ID": str,
+               "External ID (optional reference sample ID)": str,}
+    df = pd.read_excel(fn, sheet_name="Cell Multiplexing", dtype=_dtypes)
+    desc = descriptors.descriptors.findall_header_descriptors(
+        df, mapper=_demux_column_mapper
+    )  # identify any header descriptors
+    df = df.rename(columns=_demux_column_mapper)
+    df = df.replace("NA", pd.NA)
+    df = df.dropna(axis="columns", how="all")  # remove empty cols
+    if not df.empty:
+        df = df.convert_dtypes()
+    if "Wells" in df.columns:
+        df["Wells"] = df["Wells"].apply(lambda x: x.replace(" ", ""))
+    logger.debug("demux descriptors: {}".format(str(desc)))
     return df, desc
 
 
@@ -768,6 +809,13 @@ def create_default_config(merged_samples, opts, args, fastq_dir=None, descriptor
                 md5 = [md5sums.get(os.path.basename(i)) for i in val.split(',')]
                 if md5 and val:
                     config["samples"][sample_id][col_name+ "_md5sum"] = ','.join(md5) 
+
+    if custom_opts.get("Libprep",'').startswith("Parse Biosciences"):
+        demux_df, demux_desc = read_demux_sheet(args.ssub[0])
+
+        config['wells'] = {}
+        for k,v in demux_df.to_dict(orient="index").items():
+            config['wells'][v['Sample_ID']] = v
 
     if write_yaml:
         yaml.safe_dump(config, args.output)
