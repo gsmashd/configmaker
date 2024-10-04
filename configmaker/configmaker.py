@@ -37,6 +37,7 @@ SEQUENCERS = {
     "M05617": "MiSeq SINTEF",
     "M71102": "MiSeq MolPat",
     "A01990": "NovaSeq 6000",
+    "MN00686": "MiniSeq NTNU",
 }
 
 GCF_WORKFLOWS_SRC = "https://github.com/gcfntnu/gcf-workflows.git"
